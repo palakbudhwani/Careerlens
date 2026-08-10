@@ -253,15 +253,21 @@ ${jobDescription}
 export async function generateQuestions(resumeText, jobDescription, difficulty = 'Mid', count = 5) {
   const systemInstruction = `You are a Senior Technical Interviewer.
 Analyze the provided resume and target job description to generate two distinct sets of tailored interview questions:
-1. **resumeBasedQuestions**: You must thoroughly analyze the resume to find specific projects, experiences, coursework, or leadership accomplishments mentioned by the candidate. Pinpoint named details (e.g. "In your AI Tutor project...", "For your Cloud-Based File Sharing...", "You've worked with both React.js (TransitOps) and Flutter (GoRizz)..."). Ask deep, challenging questions about how they built those, challenges faced, or tech choices.
-2. **roleBasedQuestions**: Generate general questions targeting the requirements of the job description, covering core technical skills, behavioral fit, and gap-alignment (e.g. testing practices, containerization, state management patterns).
+1. **resumeBasedQuestions**: Generate exactly 10 questions. You must thoroughly analyze the resume to find specific projects, experiences, coursework, certifications, or leadership accomplishments mentioned by the candidate.
+   CRITICAL: Ensure the questions are diverse and cover the entire resume.
+   - At least 1 question per project mentioned, asking about design choices or implementation challenges.
+   - At least 2 questions targeting coursework or academic theory (e.g. data structures, OS, databases).
+   - At least 2 questions targeting work/experience responsibilities, teamwork, or agile sprint practices.
+   - At least 1 question targeting certifications, hackathons, or extracurricular achievements.
+   - Do NOT repeat the same question phrasing or template pattern. Ensure variety in the style of questions.
+2. **roleBasedQuestions**: Generate exactly 5 questions based on the target job role's requirements, covering core technical skills, behavioral scenarios, and alignment with candidate gaps. Do not repeat template patterns.
 
 Ensure the difficulty of the questions is: ${difficulty}.
 Provide context, a sampleAnswerOutline, and evalCriteria for every question.
 Enforce JSON format matching the schema.`;
 
   const prompt = `
-Generate exactly ${count} resume-based questions and ${count} role-based questions at the "${difficulty}" difficulty level.
+Generate exactly 10 resume-based questions and exactly 5 role-based questions at the "${difficulty}" difficulty level.
 
 === RESUME TEXT ===
 ${resumeText}
@@ -402,6 +408,80 @@ function getMockMatchAnalysis(resumeText, jobDescription) {
   };
 }
 
+function getSkillSpecificQuestion(skill, qId) {
+  const skillLower = skill.toLowerCase();
+  if (skillLower.includes('react')) {
+    return {
+      id: `q-res-dyn-${qId}`,
+      type: "Technical",
+      question: `Your resume lists experience with React. In your experience, how do you handle state management across deeply nested components, and when do you opt for custom hooks vs context or state libraries?`,
+      context: `Assesses React state management depth.`,
+      sampleAnswerOutline: ["Acknowledge prop drilling.", "Explain Context API and custom hooks.", "Discuss Zustand or Redux for global states."],
+      evalCriteria: "Looks for practical React state modeling capability."
+    };
+  }
+  if (skillLower.includes('javascript') || skillLower.includes('typescript')) {
+    return {
+      id: `q-res-dyn-${qId}`,
+      type: "Technical",
+      question: `Since you work with ${skill}, can you explain how you handle asynchronous control flows, error boundaries, and memory management in modern JavaScript runtimes?`,
+      context: `Tests advanced asynchronous JS runtime knowledge.`,
+      sampleAnswerOutline: ["Discuss Promises, async/await, and try-catch.", "Explain event loop microtasks.", "Mention memory leak preventions (clearing timers/listeners)."],
+      evalCriteria: "Looks for deep understanding of the JS runtime engine."
+    };
+  }
+  if (skillLower.includes('python')) {
+    return {
+      id: `q-res-dyn-${qId}`,
+      type: "Technical",
+      question: `Your profile highlights Python skills. How do you approach structuring large-scale Python applications, and what patterns do you use for dependency isolation and performance scaling?`,
+      context: `Tests backend Python architecture capabilities.`,
+      sampleAnswerOutline: ["Mention virtualenvs, pip, or poetry.", "Discuss asyncio or multiprocessing for scaling.", "Describe testing frameworks like pytest."],
+      evalCriteria: "Looks for large-scale Python package and runtime experience."
+    };
+  }
+  if (skillLower.includes('docker') || skillLower.includes('kubernetes')) {
+    return {
+      id: `q-res-dyn-${qId}`,
+      type: "Technical",
+      question: `You've worked with containerization using ${skill}. What are your best practices for optimizing Dockerfile build times, layer caching, and minimizing container image sizes for production?`,
+      context: `Assesses containerization scaling and deployment.`,
+      sampleAnswerOutline: ["Use multi-stage builds.", "Order commands to maximize layer caching.", "Choose alpine or distroless base images."],
+      evalCriteria: "Evaluates production-ready Devops/Docker knowledge."
+    };
+  }
+  if (skillLower.includes('aws') || skillLower.includes('cloud')) {
+    return {
+      id: `q-res-dyn-${qId}`,
+      type: "Technical",
+      question: `With your cloud experience in ${skill}, how do you approach setting up high-availability architectures and securing access to data buckets or EC2 instances using IAM rules?`,
+      context: `Checks cloud infrastructure security awareness.`,
+      sampleAnswerOutline: ["State the principle of least privilege in IAM policies.", "Use VPCs, security groups, and private subnets.", "Configure auto-scaling groups and load balancers."],
+      evalCriteria: "Checks cloud architecture and security principles."
+    };
+  }
+  // Generic skill templates
+  if (qId % 2 === 0) {
+    return {
+      id: `q-res-dyn-${qId}`,
+      type: "Technical",
+      question: `Your resume lists proficiency in "${skill}". Can you explain a scenario where you integrated this technology to solve a complex engineering challenge?`,
+      context: `Assesses integration capabilities of "${skill}".`,
+      sampleAnswerOutline: [`Explain the purpose of using "${skill}" in your project.`, `Describe a technical obstacle that arose during integration.`, `Detail how you resolved the bug or configuration blocker.`],
+      evalCriteria: "Looks for practical troubleshooting and tool application."
+    };
+  } else {
+    return {
+      id: `q-res-dyn-${qId}`,
+      type: "Technical",
+      question: `How do you stay up-to-date with best practices in "${skill}", and what is a new feature or design pattern in this technology that you are excited about?`,
+      context: `Checks candidate's growth mindset and technological curiosity.`,
+      sampleAnswerOutline: [`Mention blogs, official documentations, or GitHub repositories.`, `Explain a new version feature (e.g. React server components, Python type hints).`, `Discuss how this feature improves developer efficiency or runtime speed.`],
+      evalCriteria: "Evaluates intellectual curiosity and eagerness to learn."
+    };
+  }
+}
+
 function getMockInterviewQuestions(resumeText, jobDescription, difficulty, count) {
   const text = resumeText || '';
   const textLower = text.toLowerCase();
@@ -480,10 +560,70 @@ function getMockInterviewQuestions(resumeText, jobDescription, difficulty, count
           "Highlight how you successfully delivered the project on time."
         ],
         evalCriteria: "Evaluates leadership capability, teamwork ethics, communication clarity, and version control discipline."
+      },
+      {
+        id: "q-res-006",
+        type: "Project-Based",
+        question: "In your GoRizz project, you built a mobile platform using Flutter. What patterns did you use for structure and state management, and how did you verify the app remains responsive during network latency?",
+        context: "Explores mobile design paradigms and asynchronous loading performance.",
+        sampleAnswerOutline: [
+          "State state management choices (e.g. Provider, Bloc, Riverpod).",
+          "Explain asynchronous operations (async/await, FutureBuilder).",
+          "Discuss offline caching or mock repositories for latency testing."
+        ],
+        evalCriteria: "Assesses familiarity with clean architecture in Flutter and handling unstable network threads."
+      },
+      {
+        id: "q-res-007",
+        type: "Project-Based",
+        question: "Your resume details Hope Finder. What was the core problem solved by Hope Finder, and how did you structure its database schemas in Supabase for quick, relational user queries?",
+        context: "Assesses PostgreSQL/Supabase database schema structure capability.",
+        sampleAnswerOutline: [
+          "Explain the purpose and users of Hope Finder.",
+          "Discuss Supabase backend configuration, tables, and foreign keys.",
+          "Describe any row-level security (RLS) policies set up for security."
+        ],
+        evalCriteria: "Looks for schema design competence, relational database security rules, and clean query construction."
+      },
+      {
+        id: "q-res-008",
+        type: "Experience-Based",
+        question: "You participated in the Odoo Hackathon. Tell me about the product you built during the hackathon and the most critical debugging decision you had to make under tight time limits.",
+        context: "Evaluates prototyping ability and debugging under extreme hackathon pressure.",
+        sampleAnswerOutline: [
+          "Summarize the product concept built at Odoo Hackathon.",
+          "Describe the critical issue that arose in the final hours.",
+          "Explain how you isolated the bug and decided on a quick workaround rather than a full refactor."
+        ],
+        evalCriteria: "Checks problem solving efficiency, adaptability, and high-pressure development decision capabilities."
+      },
+      {
+        id: "q-res-009",
+        type: "Coursework-Based",
+        question: "You have listed Operating Systems and Computer Networks in your courses. How do concepts like thread pooling, TCP handshakes, or CORS headers directly apply when you are developing Node.js backend endpoints?",
+        context: "Bridges core operating systems and networks concepts to practical server-side JavaScript.",
+        sampleAnswerOutline: [
+          "Explain Node.js event loop single-threaded model and thread pool (libuv) delegation.",
+          "Describe how TCP streams transmit JSON payload and how CORS restricts browser fetch.",
+          "Illustrate with an example of configuring CORS middleware in Express."
+        ],
+        evalCriteria: "Tests basic comprehension of networking boundaries and OS-level execution in Node."
+      },
+      {
+        id: "q-res-010",
+        type: "Coursework-Based",
+        question: "You have coursework listed in DBMS. Can you discuss the difference between SQL indexes (B-Trees) and standard table scans, and how you choose when to index columns in your tables?",
+        context: "Assesses index optimization knowledge in relational databases.",
+        sampleAnswerOutline: [
+          "Define B-Tree indexing logic and search complexity O(log N).",
+          "Explain the overhead of write operations (INSERT/UPDATE) on indexes.",
+          "Detail a role of thumb for indexing columns (primary keys, foreign keys, fields inside WHERE clauses)."
+        ],
+        evalCriteria: "Looks for DB performance optimization capabilities and index management mechanics."
       }
     ];
   } else {
-    // Dynamic Heuristics for other resumes
+    // Dynamic Heuristics for other resumes (Generating 10 questions covering different sections)
     const projects = [];
     const KNOWN_SKILLS = [
       'React', 'TypeScript', 'JavaScript', 'Node.js', 'Python', 'Java', 'C++', 
@@ -529,121 +669,169 @@ function getMockInterviewQuestions(resumeText, jobDescription, difficulty, count
 
     let qCount = 0;
 
-    // A. Project question
-    if (projects.length > 0) {
-      const p = projects[0];
-      const s = detectedSkills[0] || 'modern technologies';
-      resumeBasedQuestions.push({
-        id: `q-res-dyn-${++qCount}`,
-        type: "Project-Based",
-        question: `In your "${p}" project, you worked with ${s}. Can you walk me through the architecture and the main technical challenges you faced during its implementation?`,
-        context: `Directly targets project details found in your resume for "${p}".`,
-        sampleAnswerOutline: [
-          `Describe the core objective of the "${p}" project.`,
-          `Explain how ${s} was integrated into the architecture.`,
-          `Discuss a specific challenge faced (e.g. latency, deployment, database schemas) and how you resolved it.`,
-          `State the final results or performance metrics.`
-        ],
-        evalCriteria: "Looks for practical engineering experience, clarity in system design, and ownership of development."
-      });
-    }
-
-    // B. Second project or experience
-    if (projects.length > 1) {
-      const p = projects[1];
-      const s = detectedSkills[1] || 'technical stack';
-      resumeBasedQuestions.push({
-        id: `q-res-dyn-${++qCount}`,
-        type: "Project-Based",
-        question: `For your project "${p}", what were your key architectural decisions, and why did you choose to build it using ${s}?`,
-        context: `Explores design choices for your "${p}" project.`,
-        sampleAnswerOutline: [
-          `Describe the problem statement of "${p}".`,
-          `Explain the technology stack options you considered.`,
-          `Justify the selection of "${s}" and how it solved your goals.`,
-          `Highlight the trade-offs of this choice.`
-        ],
-        evalCriteria: "Evaluates architectural trade-off analysis, technical depth, and decision-making logic."
-      });
-    } else if (companies.length > 0) {
-      const c = companies[0];
-      resumeBasedQuestions.push({
-        id: `q-res-dyn-${++qCount}`,
-        type: "Experience-Based",
-        question: `I see you have work experience at "${c}". Can you describe your day-to-day responsibilities there and how you collaborated with your team to deliver features?`,
-        context: `Targets professional experience at "${c}".`,
-        sampleAnswerOutline: [
-          `State your role and key tasks at "${c}".`,
-          `Explain the team size, sprint rituals (Scrum, Kanban), and product cycle.`,
-          `Provide an example of a feature you shipped and how you verified its quality.`
-        ],
-        evalCriteria: "Assesses teamwork, collaboration frameworks, professional growth, and feature ownership."
-      });
-    }
-
-    // C. Coursework question
-    if (coursework.length > 0) {
-      const c = coursework[0];
-      resumeBasedQuestions.push({
-        id: `q-res-dyn-${++qCount}`,
-        type: "Coursework-Based",
-        question: `You have listed "${c}" in your academic focus or coursework. How have you applied these theoretical concepts in a practical programming project?`,
-        context: `Tests alignment between academic study of "${c}" and practical application.`,
-        sampleAnswerOutline: [
-          `Define the core concepts of "${c}" (e.g. databases, complexity analysis, routing).`,
-          `Identify a personal project where these concepts were implemented.`,
-          `Describe how applying these concepts made the software faster, more secure, or more maintainable.`
-        ],
-        evalCriteria: "Assesses ability to bridge academic theory and real-world software implementation."
-      });
-    }
-
-    // D. Skills question
-    if (detectedSkills.length > 0) {
-      const s = detectedSkills.slice(0, 3).join(', ');
-      resumeBasedQuestions.push({
-        id: `q-res-dyn-${++qCount}`,
-        type: "Technical",
-        question: `Your resume lists experience with ${s}. Can you describe a scenario where you had to troubleshoot a complex performance bottleneck using these technologies?`,
-        context: `Assesses troubleshooting capability with your core skills.`,
-        sampleAnswerOutline: [
-          `Identify a specific bottleneck in a system using these technologies.`,
-          `Explain the tools used to diagnose the issue (Chrome DevTools, profilers, databases logs).`,
-          `Detail the refactoring or configuration change that fixed the issue.`
-        ],
-        evalCriteria: "Looks for deep framework understanding, profiling capability, and debugging strategies."
-      });
-    }
-
-    // Fallbacks if nothing detected
-    if (resumeBasedQuestions.length < 2) {
-      resumeBasedQuestions.push(
-        {
-          id: `q-res-dyn-fb1`,
+    // SECTION 1: PROJECTS (1 question per project, up to 3)
+    projects.forEach((p, idx) => {
+      if (qCount >= 10 || idx >= 3) return;
+      const s = detectedSkills[idx % detectedSkills.length] || 'modern technologies';
+      
+      if (idx === 0) {
+        resumeBasedQuestions.push({
+          id: `q-res-dyn-${++qCount}`,
           type: "Project-Based",
-          question: "Based on the experience listed in your resume, can you walk me through the architecture and technical challenges of your most complex software project?",
-          context: "Assesses architectural understanding and depth of project ownership.",
+          question: `In your "${p}" project, you integrated ${s}. Can you walk me through the architecture and the main technical challenges you faced during its implementation?`,
+          context: `Directly targets project details found in your resume for "${p}".`,
           sampleAnswerOutline: [
-            "Outline the system architecture.",
-            "Describe a major bottleneck (performance, scaling, state management).",
-            "Explain the solution and trade-offs.",
-            "State the outcomes and metrics."
+            `Describe the core objective of the "${p}" project.`,
+            `Explain how ${s} was integrated into the architecture.`,
+            `Discuss a specific challenge faced (e.g. latency, deployment, database schemas) and how you resolved it.`,
+            `State the final results or performance metrics.`
           ],
-          evalCriteria: "Looks for deep technical understanding of design decisions and execution."
-        },
-        {
-          id: `q-res-dyn-fb2`,
+          evalCriteria: "Looks for practical engineering experience, clarity in system design, and ownership of development."
+        });
+      } else if (idx === 1) {
+        resumeBasedQuestions.push({
+          id: `q-res-dyn-${++qCount}`,
+          type: "Project-Based",
+          question: `For your project "${p}", what were your key architectural decisions, and why did you choose to build it using ${s} over other alternatives?`,
+          context: `Explores design choices for your "${p}" project.`,
+          sampleAnswerOutline: [
+            `Describe the problem statement of "${p}".`,
+            `Explain the technology stack options you considered.`,
+            `Justify the selection of "${s}" and how it solved your goals.`,
+            `Highlight the trade-offs of this choice.`
+          ],
+          evalCriteria: "Evaluates architectural trade-off analysis, technical depth, and decision-making logic."
+        });
+      } else {
+        resumeBasedQuestions.push({
+          id: `q-res-dyn-${++qCount}`,
+          type: "Project-Based",
+          question: `Regarding "${p}", how did you optimize performance (such as reducing loading time or query bottlenecks), and how did you verify the scaling limits of this application?`,
+          context: `Checks performance tuning and scaling capabilities on project "${p}".`,
+          sampleAnswerOutline: [
+            `Detail the performance profiling methods used.`,
+            `Mention the bottleneck identified in "${p}".`,
+            `Explain the optimization strategy (caching, indexes, compression) and results.`
+          ],
+          evalCriteria: "Checks performance optimization practices and monitoring knowledge."
+        });
+      }
+    });
+
+    // SECTION 2: WORK EXPERIENCE (up to 2 questions)
+    companies.forEach((c, idx) => {
+      if (qCount >= 10 || idx >= 2) return;
+      if (idx === 0) {
+        resumeBasedQuestions.push({
+          id: `q-res-dyn-${++qCount}`,
           type: "Experience-Based",
-          question: "In your software engineering roles, how do you approach learning new frameworks or backend systems when joining a team?",
-          context: "Checks adaptability and onboarding efficiency.",
+          question: `I see you have work experience at "${c}". Can you describe your day-to-day responsibilities there and how you collaborated with your team to deliver features?`,
+          context: `Targets professional experience at "${c}".`,
           sampleAnswerOutline: [
-            "Detail your study strategy (docs, sample apps, codebase walkthroughs).",
-            "Explain how you ask senior devs questions without interrupting their flow.",
-            "Share an example of a technology you mastered quickly."
+            `State your role and key tasks at "${c}".`,
+            `Explain the team size, sprint rituals (Scrum, Kanban), and product cycle.`,
+            `Provide an example of a feature you shipped and how you verified its quality.`
           ],
-          evalCriteria: "Looks for self-driven learning ability, proactiveness, and team integration."
-        }
-      );
+          evalCriteria: "Assesses teamwork, collaboration frameworks, professional growth, and feature ownership."
+        });
+      } else {
+        resumeBasedQuestions.push({
+          id: `q-res-dyn-${++qCount}`,
+          type: "Experience-Based",
+          question: `During your tenure at "${c}", can you describe a time when you had to manage conflicting technical requirements or tight deadlines, and how you communicated with stakeholders?`,
+          context: `Checks engineering execution and stakeholder communication at "${c}".`,
+          sampleAnswerOutline: [
+            `Describe the deadline or conflicting feature requirements.`,
+            `Outline the prioritization trade-offs (scope reduction, MVP).`,
+            `Detail how you communicated this with your team lead or manager.`
+          ],
+          evalCriteria: "Checks behavioral skills, pressure management, and negotiation."
+        });
+      }
+    });
+
+    // SECTION 3: EDUCATION / COURSEWORK (up to 2 questions)
+    coursework.forEach((c, idx) => {
+      if (qCount >= 10 || idx >= 2) return;
+      if (idx === 0) {
+        resumeBasedQuestions.push({
+          id: `q-res-dyn-${++qCount}`,
+          type: "Coursework-Based",
+          question: `You have listed "${c}" in your academic focus or coursework. How have you applied these theoretical concepts in a practical programming project?`,
+          context: `Tests alignment between academic study of "${c}" and practical application.`,
+          sampleAnswerOutline: [
+            `Define the core concepts of "${c}" (e.g. databases, complexity analysis, routing).`,
+            `Identify a personal project where these concepts were implemented.`,
+            `Describe how applying these concepts made the software faster, more secure, or more maintainable.`
+          ],
+          evalCriteria: "Assesses ability to bridge academic theory and real-world software implementation."
+        });
+      } else {
+        resumeBasedQuestions.push({
+          id: `q-res-dyn-${++qCount}`,
+          type: "Coursework-Based",
+          question: `In your course on "${c}", what was the most complex assignment or project you completed, and what core algorithms or design patterns did you implement?`,
+          context: `Assesses coursework academic project details.`,
+          sampleAnswerOutline: [
+            `Summarize the project or laboratory work for "${c}".`,
+            `Detail the core algorithms (e.g. graph traversal, query parsing, thread pooling).`,
+            `Share the debugging challenges faced.`
+          ],
+          evalCriteria: "Evaluates understanding of fundamental computer science concepts."
+        });
+      }
+    });
+
+    // SECTION 4: SKILLS & CERTIFICATIONS (distinct templates via helper, up to 3 questions)
+    const skillsToAsk = detectedSkills.slice(0, 4);
+    skillsToAsk.forEach((s) => {
+      if (qCount >= 10) return;
+      // Make sure we don't ask about skills we already covered in projects
+      const projectTechsUsed = resumeBasedQuestions.map(q => q.question);
+      const isAlreadyAsked = projectTechsUsed.some(qText => qText.includes(`"${s}"`) || qText.includes(` ${s} `));
+      if (!isAlreadyAsked) {
+        resumeBasedQuestions.push(getSkillSpecificQuestion(s, ++qCount));
+      }
+    });
+
+    // Fill up to 10 with general fallback templates
+    const generalFallbacks = [
+      {
+        question: "Based on the experience listed in your resume, can you walk me through the architecture and technical challenges of your most complex software project?",
+        type: "Project-Based",
+        context: "Assesses architectural understanding and depth of project ownership.",
+        sampleAnswerOutline: ["Outline the system architecture.", "Describe a major bottleneck (performance, scaling, state management).", "Explain the solution and trade-offs.", "State the outcomes and metrics."],
+        evalCriteria: "Looks for deep technical understanding of design decisions and execution."
+      },
+      {
+        question: "In your software engineering roles, how do you approach learning new frameworks or backend systems when joining a team?",
+        type: "Experience-Based",
+        context: "Checks adaptability and onboarding efficiency.",
+        sampleAnswerOutline: ["Detail your study strategy (docs, sample apps, codebase walkthroughs).", "Explain how you ask senior devs questions without interrupting their flow.", "Share an example of a technology you mastered quickly."],
+        evalCriteria: "Looks for self-driven learning ability, proactiveness, and team integration."
+      },
+      {
+        question: "Describe your approach to code reviews. What do you look for when reviewing a pull request, and how do you deliver constructive feedback?",
+        type: "Experience-Based",
+        context: "Checks quality assurance standard and engineering culture fit.",
+        sampleOutline: ["List factors: safety, optimization, standards, readability.", "Explain how to structure remarks (e.g. asking questions rather than commanding).", "Discuss how to highlight positive aspects of the code."],
+        evalCriteria: "Evaluates interpersonal communication, engineering discipline, and code quality benchmarks."
+      },
+      {
+        question: "When designing API endpoints, what RESTful standards or routing conventions do you follow to ensure your endpoints are scalable and easy to consume?",
+        type: "Technical",
+        context: "Checks API architectural standards.",
+        sampleAnswerOutline: ["Mention plural nouns, HTTP verbs (GET, POST, etc.), and standard status codes.", "Discuss nesting models, validation schemas, and versioning (/api/v1).", "Explain CORS configurations and payload limits."],
+        evalCriteria: "Assesses familiarity with HTTP paradigms, routing safety, and API integrations."
+      }
+    ];
+
+    while (resumeBasedQuestions.length < 10 && generalFallbacks.length > 0) {
+      const fb = generalFallbacks.shift();
+      resumeBasedQuestions.push({
+        id: `q-res-dyn-fb-${++qCount}`,
+        ...fb
+      });
     }
   }
 
@@ -671,6 +859,43 @@ function getMockInterviewQuestions(resumeText, jobDescription, difficulty, count
         "Highlight a past project where you successfully learned new technologies quickly."
       ],
       evalCriteria: "Looks for eagerness to learn, adaptability, self-direction, and structured onboarding ideas."
+    },
+    {
+      id: "q-role-003",
+      type: "Technical",
+      question: "Explain the concept of Cross-Origin Resource Sharing (CORS) in modern web apps. How does it protect api servers, and how do you configure it in an Express application?",
+      context: "Evaluates fundamental web security architecture and Express middleware configuration.",
+      sampleAnswerOutline: [
+        "Define CORS as a browser-side security standard limiting cross-origin fetches.",
+        "Describe pre-flight requests (OPTIONS check).",
+        "Show how to initialize 'cors()' middleware in Express with whitelist origin options."
+      ],
+      evalCriteria: "Looks for security awareness, API communication boundaries, and practical Express middleware knowledge."
+    },
+    {
+      id: "q-role-004",
+      type: "Technical",
+      question: "Describe your approach to writing unit and integration tests. What testing frameworks (like Jest, Vitest, React Testing Library) do you prefer and why?",
+      context: "Tests engineering quality standard, testing strategies, and test tooling experience.",
+      sampleAnswerOutline: [
+        "Differentiate unit testing (functions in isolation) from integration testing (components working together).",
+        "Explain mock endpoints/servers vs actual assertions.",
+        "Justify choice of tool (e.g. Vitest for speed in Vite projects, RTL for user action simulation)."
+      ],
+      evalCriteria: "Evaluates commitment to code quality, testing strategies, and framework-level execution."
+    },
+    {
+      id: "q-role-005",
+      type: "Behavioral",
+      question: "Describe a situation where you had a disagreement with a designer or product manager regarding how a feature should be implemented. How did you resolve it?",
+      context: "Evaluates communication, negotiation skills, and cross-functional collaboration.",
+      sampleAnswerOutline: [
+        "Describe the context of disagreement.",
+        "Discuss how you actively listened to their user experience concerns.",
+        "Explain how you proposed a compromise or backed it up with data/performance metrics.",
+        "State the final positive outcome."
+      ],
+      evalCriteria: "Checks for empathy, professional communication, and constructive problem-solving skills."
     }
   ];
 
