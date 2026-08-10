@@ -47,7 +47,9 @@ export default function MatchPage() {
   const [analysis, setAnalysis] = useState<MatchAnalysisResponse | null>(null)
   const [resumeText, setResumeText] = useState('')
   const [resumeName, setResumeName] = useState('')
-  const [questions, setQuestions] = useState<InterviewQuestion[]>([])
+  const [resumeQuestions, setResumeQuestions] = useState<InterviewQuestion[]>([])
+  const [roleQuestions, setRoleQuestions] = useState<InterviewQuestion[]>([])
+  const [questionTab, setQuestionTab] = useState<'resume' | 'role'>('resume')
   const [selectedQuestion, setSelectedQuestion] = useState<InterviewQuestion | null>(null)
   const [answer, setAnswer] = useState('')
   const [evaluation, setEvaluation] = useState<AnswerEvaluationResponse | null>(null)
@@ -99,7 +101,8 @@ export default function MatchPage() {
     setError(null)
     setEvaluation(null)
     setAnalysis(null)
-    setQuestions([])
+    setResumeQuestions([])
+    setRoleQuestions([])
     setSelectedQuestion(null)
 
     try {
@@ -149,14 +152,20 @@ export default function MatchPage() {
     
     try {
       const result = await apiService.generateQuestions(text, jobDesc, diff, 5)
-      setQuestions(result.questions)
-      setSelectedQuestion(result.questions[0] || null)
+      setResumeQuestions(result.resumeBasedQuestions || [])
+      setRoleQuestions(result.roleBasedQuestions || [])
+      
+      const defaultQ = (result.resumeBasedQuestions && result.resumeBasedQuestions[0]) || 
+                       (result.roleBasedQuestions && result.roleBasedQuestions[0]) || null;
+      setSelectedQuestion(defaultQ)
+      setQuestionTab('resume')
 
       // Update history count
+      const totalQuestionsCount = (result.resumeBasedQuestions?.length || 0) + (result.roleBasedQuestions?.length || 0)
       setHistory(prev =>
         prev.map(item =>
           item.resume_name === resumeName
-            ? { ...item, question_count: result.questions.length }
+            ? { ...item, question_count: totalQuestionsCount }
             : item
         )
       )
@@ -187,9 +196,12 @@ export default function MatchPage() {
       )
       setEvaluation(evalResult)
 
-      setQuestions((prev) =>
-        prev.map((q) => (q.id === selectedQuestion.id ? { ...q, answered: true } : q))
-      )
+      const markAnswered = (list: InterviewQuestion[]) => 
+        list.map((q) => (q.id === selectedQuestion.id ? { ...q, answered: true } : q))
+
+      setResumeQuestions(prev => markAnswered(prev))
+      setRoleQuestions(prev => markAnswered(prev))
+      setSelectedQuestion(prev => prev ? { ...prev, answered: true } : null)
 
       setHistory(prev =>
         prev.map(item =>
@@ -207,6 +219,9 @@ export default function MatchPage() {
 
   const strengths = useMemo(() => analysis?.matchingSkills || [], [analysis])
   const weaknesses = useMemo(() => analysis?.missingSkills || [], [analysis])
+  const activeQuestions = useMemo(() => {
+    return questionTab === 'resume' ? resumeQuestions : roleQuestions
+  }, [questionTab, resumeQuestions, roleQuestions])
 
   return (
     <div className="space-y-6">
@@ -576,13 +591,47 @@ export default function MatchPage() {
             </Button>
           </div>
         </CardHeader>
-
         <CardContent className="pt-6">
-          {questions.length > 0 ? (
+          {(resumeQuestions.length > 0 || roleQuestions.length > 0) && (
+            <div className="mb-5 flex border-b border-border">
+              <button
+                onClick={() => {
+                  setQuestionTab('resume')
+                  setEvaluation(null)
+                  setAnswer('')
+                  setSelectedQuestion(resumeQuestions[0] || null)
+                }}
+                className={`pb-2.5 px-4 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
+                  questionTab === 'resume'
+                    ? 'border-brand-600 text-brand-600 font-bold'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Resume-Based Questions ({resumeQuestions.length})
+              </button>
+              <button
+                onClick={() => {
+                  setQuestionTab('role')
+                  setEvaluation(null)
+                  setAnswer('')
+                  setSelectedQuestion(roleQuestions[0] || null)
+                }}
+                className={`pb-2.5 px-4 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
+                  questionTab === 'role'
+                    ? 'border-brand-600 text-brand-600 font-bold'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Role-Based Questions ({roleQuestions.length})
+              </button>
+            </div>
+          )}
+
+          {activeQuestions.length > 0 ? (
             <div className="grid gap-6 lg:grid-cols-2">
               <div className="space-y-2">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Generated Prompts</p>
-                {questions.map((q) => {
+                {activeQuestions.map((q) => {
                   const isSelected = selectedQuestion?.id === q.id
                   return (
                     <button
@@ -629,14 +678,16 @@ export default function MatchPage() {
                       <p className="mt-1 text-[11px] text-muted-foreground italic"><strong>Context:</strong> {selectedQuestion.context}</p>
                     </div>
 
-                    <div className="space-y-2 border-t pt-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Sample Answer Outline</span>
-                      <ul className="list-decimal pl-4 text-[11px] text-muted-foreground space-y-0.5">
-                        {selectedQuestion.sampleAnswerOutline.map((item, idx) => (
-                          <li key={idx}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
+                    {selectedQuestion.sampleAnswerOutline && selectedQuestion.sampleAnswerOutline.length > 0 && (
+                      <div className="space-y-2 border-t pt-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Sample Answer Outline</span>
+                        <ul className="list-decimal pl-4 text-[11px] text-muted-foreground space-y-0.5">
+                          {selectedQuestion.sampleAnswerOutline.map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                     <div>
                       <textarea

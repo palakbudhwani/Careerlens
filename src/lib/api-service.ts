@@ -1,6 +1,6 @@
 // Service adapter layer for CareerLens Backend APIs
 
-const API_BASE_URL = 'http://localhost:5000/api/v1';
+const API_BASE_URL = 'http://127.0.0.1:5000/api/v1';
 
 export interface ParsedDetails {
   name: string;
@@ -73,7 +73,8 @@ export interface InterviewQuestion {
 }
 
 export interface InterviewQuestionsResponse {
-  questions: InterviewQuestion[];
+  resumeBasedQuestions: InterviewQuestion[];
+  roleBasedQuestions: InterviewQuestion[];
 }
 
 export interface AnswerEvaluationResponse {
