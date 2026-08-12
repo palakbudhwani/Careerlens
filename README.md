@@ -1,65 +1,83 @@
-# CareerLens — AI Resume Job Matching (Frontend)
+# CareerLens — AI Resume Job Matching & Mock Interview Platform
 
-CareerLens is a premium, frontend-only AI career-tech product. It tells you **how well** you match a
-job, **why** you match, **what** you are missing, and **what to do next** — powered by mock data,
-React state, and `localStorage`. No backend.
+CareerLens is a premium AI-powered career-tech platform. It analyzes resumes against target job descriptions to calculate ATS match scores, identify missing skills/gaps, and generate custom practice interviews. 
 
-This repository contains the **premium landing page** plus the app foundation: design system,
-theme, app shell, mock-data layer, and placeholder routes for every future feature page.
+It features a robust client interface built in React and a secure Express backend powered by Gemini generative models.
 
-## Tech stack
+---
 
-- [React 19](https://react.dev) + [Vite 8](https://vite.dev) + TypeScript (strict)
-- [Tailwind CSS v4](https://tailwindcss.com) (CSS-first configuration, class-based dark mode)
-- [React Router v7](https://reactrouter.com)
-- [Lucide React](https://lucide.dev) — icons
-- [Framer Motion](https://www.framer.com/motion/) — micro-interactions
-- [Recharts](https://recharts.org) — charts (installed for upcoming feature milestones)
+## Key Features
 
-## Getting started
+1. **ATS Match Analysis**: Upload a PDF resume to parse contents in real time, score your ATS alignment, identify matching strengths, and discover missing skill gaps.
+2. **Dual-Questionnaire Interview Generator**: Generates two distinct question sets:
+   * **Resume-Based**: Scans your resume text and target projects to ask pinpointed technical questions about your actual work (*e.g. AI Tutor, GoRizz*).
+   * **Role-Based**: Evaluates technical capability against the job's core requirements.
+3. **Proctored AI Mock Interview Workspace**: 
+   * **Round 1 (Aptitude)**: Logic and reasoning Multiple Choice Questions (MCQs).
+   * **Round 2 (Technical)**: Coding scenario questions with simulated speech dictation inputs.
+   * **Round 3 (HR & Behavioral)**: Cultural alignment and career motivation interview.
+   * **Automated Proctoring**: Tracks tab focus shifts or window minimization. Exceeding 3 alerts automatically flags the session as terminated due to cheating.
+   * **AI Scorecard**: Generates average scores per round, checklists of observed strengths, and custom improvement plans.
+
+---
+
+## Tech Stack
+
+### Frontend:
+* **React 19** + **Vite 8** + TypeScript (strict)
+* **Tailwind CSS v4** (CSS-first config, class-based dark mode)
+* **React Router v7**
+* **Lucide React** (Icons) & **Framer Motion** (Micro-animations)
+
+### Backend:
+* **Node.js** + **Express**
+* **@google/genai** — Gemini structured responses using OpenAPI schemas
+* **pdf-parse** — Server-side text extraction from PDF uploads
+* **Multer** — Memory buffer file upload stream handling
+
+---
+
+## Getting Started
+
+### 1. Configure your Gemini API Key
+Navigate to [Google AI Studio](https://aistudio.google.com/), generate a free API key, and add it inside [`backend/.env`](file:///c:/Users/palak/Downloads/Careerlens(new)/Careerlens/backend/.env):
+```env
+PORT=5000
+NODE_ENV=development
+GEMINI_API_KEY=AIzaSyYourGeminiApiKeyHere
+```
+*Note: If no API key is specified, the backend runs in a smart offline fallback mode containing regex heuristics to parse resume details and yield realistic evaluations.*
+
+### 2. Setup and Launch
+A post-installation hook is configured to set up both projects in one step. Run these commands from the root directory:
 
 ```bash
+# Install both root and backend dependencies automatically
 npm install
-npm run dev        # start the dev server
-npm run build      # type-check + production build
-npm run lint       # oxlint
-npm run preview    # serve the production build
+
+# Start both Vite frontend (port 5173) & Express backend (port 5000) concurrently
+npm run dev
+
+# Run typechecks and compile production bundle
+npm run build
 ```
 
-Open the printed dev URL and try:
+---
 
-- `/` — premium marketing landing page
-- `/login`, `/signup` — auth shells (placeholders)
-- `/dashboard` — app shell with sidebar, header, and theme toggle
-- `/jobs` → `/jobs/job-001`, `/match` → `/match/job-001` — routes wired to the mock-data layer
-- Every other route renders an intentional "coming soon" workspace
-
-## Project structure
+## Project Structure
 
 ```
-src/
-  assets/          # static assets
-  components/
-    ui/            # design-system primitives (Button, Card, Badge, Input, …)
-    layout/        # AppLayout, AppSidebar, AppHeader, MobileNav, AuthLayout
-  data/            # mock-data layer (candidate, resume, jobs, matches, gaps, history, …)
-  hooks/           # useTheme, useLocalStorage, useClickOutside
-  lib/             # cn(), theme provider, mock-store facade
-  pages/           # route components (placeholders for future milestones)
-  routes/          # route table
-  types/           # domain types
-  utils/           # (reserved) shared helpers
+├── backend/
+│   ├── server.js               # Express application and route handlers
+│   ├── llm.js                  # Gemini LLM wrappers and ATS parser schemas
+│   ├── mockInterviewStore.js   # In-memory session DB for proctored interviews
+│   ├── mockInterviewLlm.js     # Interview question generators & grading prompts
+│   └── package.json            # Backend dependencies
+├── src/
+│   ├── components/             # Layouts, Sidebar, Header, UI primitives
+│   ├── data/                   # Sidebar navigation items and mock job seeds
+│   ├── lib/                    # API client service adapter layer (api-service.ts)
+│   ├── pages/                  # Page views: match.tsx, mock-interview.tsx, dashboard.tsx
+│   └── routes/                 # Router mapping (index.tsx)
+└── package.json                # Root concurrently development runner script
 ```
-
-## Mock-data conventions
-
-- All domain data lives in `src/data/*` and is typed in `src/types`.
-- Feature code reads data exclusively through `src/lib/mock-store.ts` — a facade that will later
-  resolve to real API calls without touching components.
-
-## Design system
-
-- Deep navy foundation (`navy-*`), electric violet-blue accent (`brand-*`), neutral surfaces.
-- Semantic tokens (`background`, `card`, `border`, `primary`, …) that flip in `.dark` mode.
-- Light / dark / system theming with `localStorage` persistence and no-flash startup script.
-- Fonts: Plus Jakarta Sans (display) + Inter (body) via Google Fonts with graceful fallbacks.
