@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  Award,
   Briefcase,
   Clock,
   FileText,
@@ -11,7 +12,6 @@ import {
   TrendingUp,
   UserCog,
   UserRound,
-  Video,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -40,7 +40,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: 'Jobs', to: '/jobs', icon: Briefcase },
       { label: 'Match Analysis', to: '/match', icon: ScanSearch },
-      { label: 'Mock Interview', to: '/mock-interview', icon: Video },
+      { label: 'Interview Practice', to: '/interview', icon: Award },
       { label: 'Skill Gaps', to: '/skill-gaps', icon: Gauge },
       { label: 'Career Growth', to: '/career-growth', icon: TrendingUp },
       { label: 'Compare Jobs', to: '/compare', icon: GitCompare },

@@ -1,7 +1,5 @@
 import { lazy as lazyPage, Suspense, type ReactNode } from 'react'
-
 import { Route, Routes } from 'react-router-dom'
-
 import { AppLayout } from '@/components/layout/app-layout'
 import { LoaderCircle } from 'lucide-react'
 
@@ -14,9 +12,9 @@ const CareerProfilePage = lazyPage(() => import('@/pages/career-profile'))
 const JobsPage = lazyPage(() => import('@/pages/jobs'))
 const JobDetailPage = lazyPage(() => import('@/pages/job-detail'))
 const MatchPage = lazyPage(() => import('@/pages/match'))
-const MockInterviewPage = lazyPage(() => import('@/pages/mock-interview'))
 const SkillGapsPage = lazyPage(() => import('@/pages/skill-gaps'))
 const CareerGrowthPage = lazyPage(() => import('@/pages/career-growth'))
+const InterviewPage = lazyPage(() => import('@/pages/interview'))
 const ComparePage = lazyPage(() => import('@/pages/compare'))
 const HistoryPage = lazyPage(() => import('@/pages/history'))
 const ProfilePage = lazyPage(() => import('@/pages/profile'))
@@ -48,7 +46,7 @@ export default function AppRoutes() {
           <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/match" element={<MatchPage />} />
           <Route path="/match/:jobId" element={<MatchPage />} />
-          <Route path="/mock-interview" element={<MockInterviewPage />} />
+          <Route path="/interview" element={<InterviewPage />} />
           <Route path="/skill-gaps" element={<SkillGapsPage />} />
           <Route path="/career-growth" element={<CareerGrowthPage />} />
           <Route path="/compare" element={<ComparePage />} />

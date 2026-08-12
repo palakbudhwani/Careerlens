@@ -18,11 +18,10 @@ import type {
 /**
  * Central data facade for the frontend demo.
  *
- * Every feature slices reads domain data through this store so the UI never
- * imports mock arrays directly. When a real backend arrives, only the
- * implementations below change — components stay untouched (the same
- * signatures will resolve to async calls).
+ * Static/demo data is still used for jobs, skills, recommendations, etc.
+ * Authentication data comes from AuthContext.
  */
+
 export const mockStore = {
   getCandidate(): Candidate {
     return candidate

@@ -1,33 +1,111 @@
 import type { Candidate, Skill } from '@/types'
 
 export const candidateSkills: Skill[] = [
-  { id: 'sk-ts', name: 'TypeScript', category: 'technical', proficiency: 5, years: 6 },
-  { id: 'sk-react', name: 'React', category: 'technical', proficiency: 5, years: 6 },
-  { id: 'sk-next', name: 'Next.js', category: 'technical', proficiency: 4, years: 4 },
-  { id: 'sk-node', name: 'Node.js', category: 'technical', proficiency: 4, years: 5 },
-  { id: 'sk-graphql', name: 'GraphQL', category: 'technical', proficiency: 4, years: 3 },
-  { id: 'sk-tailwind', name: 'Tailwind CSS', category: 'technical', proficiency: 5, years: 4 },
-  { id: 'sk-jest', name: 'Testing (Jest + Playwright)', category: 'technical', proficiency: 4, years: 3 },
-  { id: 'sk-docker', name: 'Docker & CI/CD', category: 'tool', proficiency: 3, years: 3 },
-  { id: 'sk-python', name: 'Python', category: 'technical', proficiency: 2, years: 2 },
-  { id: 'sk-ml', name: 'Machine Learning Fundamentals', category: 'technical', proficiency: 2, years: 1 },
-  { id: 'sk-mgmt', name: 'Technical Leadership', category: 'soft', proficiency: 4, years: 3 },
-  { id: 'sk-comms', name: 'Cross-functional Communication', category: 'soft', proficiency: 5, years: 6 },
-  { id: 'sk-design', name: 'Design Systems', category: 'technical', proficiency: 4, years: 4 },
+  {
+    id: 'sk-ts',
+    name: 'TypeScript',
+    category: 'technical',
+    proficiency: 5,
+    years: 6,
+  },
+  {
+    id: 'sk-react',
+    name: 'React',
+    category: 'technical',
+    proficiency: 5,
+    years: 6,
+  },
+  {
+    id: 'sk-next',
+    name: 'Next.js',
+    category: 'technical',
+    proficiency: 4,
+    years: 4,
+  },
+  {
+    id: 'sk-node',
+    name: 'Node.js',
+    category: 'technical',
+    proficiency: 4,
+    years: 5,
+  },
+  {
+    id: 'sk-graphql',
+    name: 'GraphQL',
+    category: 'technical',
+    proficiency: 4,
+    years: 3,
+  },
+  {
+    id: 'sk-tailwind',
+    name: 'Tailwind CSS',
+    category: 'technical',
+    proficiency: 5,
+    years: 4,
+  },
+  {
+    id: 'sk-jest',
+    name: 'Testing (Jest + Playwright)',
+    category: 'technical',
+    proficiency: 4,
+    years: 3,
+  },
+  {
+    id: 'sk-docker',
+    name: 'Docker & CI/CD',
+    category: 'tool',
+    proficiency: 3,
+    years: 3,
+  },
+  {
+    id: 'sk-python',
+    name: 'Python',
+    category: 'technical',
+    proficiency: 2,
+    years: 2,
+  },
+  {
+    id: 'sk-ml',
+    name: 'Machine Learning Fundamentals',
+    category: 'technical',
+    proficiency: 2,
+    years: 1,
+  },
+  {
+    id: 'sk-mgmt',
+    name: 'Technical Leadership',
+    category: 'soft',
+    proficiency: 4,
+    years: 3,
+  },
+  {
+    id: 'sk-comms',
+    name: 'Cross-functional Communication',
+    category: 'soft',
+    proficiency: 5,
+    years: 6,
+  },
+  {
+    id: 'sk-design',
+    name: 'Design Systems',
+    category: 'technical',
+    proficiency: 4,
+    years: 4,
+  },
 ]
 
 export const candidate: Candidate = {
-  id: 'cand-001',
-  name: 'Alex Morgan',
-  initials: 'AM',
-  title: 'Senior Frontend Engineer',
-  location: 'New York, NY',
-  yearsOfExperience: 7,
-  email: 'alex.morgan@example.com',
-  headline: 'Senior Frontend Engineer crafting thoughtful interfaces for data-dense products',
-  summary:
-    'Product-minded frontend engineer with 7 years of experience building design systems and high-scale interfaces for AI products. Strong advocate for type-safe codebases, accessible UI, and measurable performance. Currently deepening applied machine-learning literacy to bridge product and model teams.',
+  id: 'cand-default',
+  name: 'User',
+  initials: 'U',
+  title: 'Career Explorer',
+  location: '',
+  yearsOfExperience: 0,
+  email: '',
+  headline: '',
+  summary: '',
   topSkills: candidateSkills,
+
   experience: [
     {
       role: 'Senior Frontend Engineer',
@@ -65,6 +143,7 @@ export const candidate: Candidate = {
       ],
     },
   ],
+
   education: [
     {
       degree: 'B.S. Computer Science',
@@ -73,8 +152,18 @@ export const candidate: Candidate = {
       field: 'Computer Science',
     },
   ],
-  preferredRoles: ['Senior Frontend Engineer', 'Staff Frontend Engineer', 'AI Product Engineer'],
+
+  preferredRoles: [
+    'Senior Frontend Engineer',
+    'Staff Frontend Engineer',
+    'AI Product Engineer',
+  ],
+
   targetRole: 'Senior Frontend Engineer (AI Products)',
   openToRemote: true,
-  desiredSalaryRange: { min: 160000, max: 195000 },
+
+  desiredSalaryRange: {
+    min: 160000,
+    max: 195000,
+  },
 }
