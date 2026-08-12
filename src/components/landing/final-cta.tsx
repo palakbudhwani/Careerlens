@@ -1,4 +1,4 @@
-import { Briefcase, Upload } from 'lucide-react'
+import { Briefcase, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Reveal } from '@/components/landing/reveal'
@@ -37,11 +37,11 @@ export function FinalCta() {
               </p>
 
               <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link to="/resume" className="w-full sm:w-auto">
+                <Link to="/skill-gaps" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     className="w-full bg-brand-500 text-white hover:bg-brand-400 sm:w-auto"
-                    leftIcon={<Upload className="size-4" aria-hidden />}
+                    leftIcon={<Sparkles className="size-4 text-amber-300" aria-hidden />}
                   >
                     Analyze My Resume
                   </Button>

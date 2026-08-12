@@ -67,7 +67,7 @@ export function TopSkills({ data }: { data: DashboardData }) {
           {data.softCount} soft · {data.toolCount} tool
         </p>
         <Link
-          to="/career-profile"
+          to="/skill-gaps"
           className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
         >
           Manage skills <ArrowRight className="size-3.5" aria-hidden />

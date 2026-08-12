@@ -42,7 +42,7 @@ export function ResumeOverview({ data }: { data: DashboardData }) {
         eyebrow="Resume Intelligence"
         title="Resume overview"
         description="Health of your latest upload"
-        viewAllTo="/resume"
+        viewAllTo="/skill-gaps"
         viewAllLabel="Open"
       />
 
@@ -97,13 +97,13 @@ export function ResumeOverview({ data }: { data: DashboardData }) {
           </div>
         )}
 
-        <Link to="/resume" className="block">
+        <Link to="/skill-gaps" className="block">
           <Button
             className="w-full"
             variant="outline"
             rightIcon={<ArrowRight className="size-4" aria-hidden />}
           >
-            Open Resume Intelligence
+            Analyze Skill Gaps
           </Button>
         </Link>
       </div>

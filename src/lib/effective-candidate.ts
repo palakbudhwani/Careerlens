@@ -113,7 +113,9 @@ function computeCompleteness(details: ParsedDetails): number {
  */
 export function candidateFromStoredResume(stored: StoredResume): Candidate {
   const details = stored.parsedDetails
-  const name = (details.name ?? '').trim() || 'Your Profile'
+  const storedUserName = typeof window !== 'undefined' ? window.localStorage.getItem('careerlens.user_name') : null
+  const storedUserEmail = typeof window !== 'undefined' ? window.localStorage.getItem('careerlens.user_email') : null
+  const name = (storedUserName && storedUserName.trim()) || (details.name ?? '').trim() || 'User Profile'
   const currentRole = details.workExperience?.[0]
   const title = (details.headline ?? '').trim() || (currentRole?.role ?? '').trim()
   const location = (details.location ?? '').trim() || (currentRole?.location ?? '').trim()
@@ -132,7 +134,7 @@ export function candidateFromStoredResume(stored: StoredResume): Candidate {
     location,
     yearsOfExperience:
       extractExplicitYears(stored.resumeText) ?? estimateYearsOfExperience(details.workExperience),
-    email: (details.email ?? '').trim(),
+    email: storedUserEmail || (details.email ?? '').trim(),
     headline: (details.headline ?? '').trim() || undefined,
     summary: (details.summary ?? '').trim() || undefined,
     phone: details.phone?.trim() || undefined,

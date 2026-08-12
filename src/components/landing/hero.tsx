@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { motion } from 'framer-motion'
-import { Briefcase, GraduationCap, Rocket, ShieldCheck, Upload, Zap } from 'lucide-react'
+import { Briefcase, GraduationCap, Rocket, ShieldCheck, Sparkles, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { HeroPreview } from '@/components/landing/hero-preview'
@@ -103,8 +103,8 @@ export function Hero() {
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to="/resume" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto" leftIcon={<Upload className="size-4" aria-hidden />}>
+            <Link to="/skill-gaps" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto" leftIcon={<Sparkles className="size-4 text-amber-300" aria-hidden />}>
                 Analyze My Resume
               </Button>
             </Link>

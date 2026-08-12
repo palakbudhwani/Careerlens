@@ -18,12 +18,12 @@ export const candidateSkills: Skill[] = [
 
 export const candidate: Candidate = {
   id: 'cand-001',
-  name: 'Alex Morgan',
-  initials: 'AM',
-  title: 'Senior Frontend Engineer',
-  location: 'New York, NY',
-  yearsOfExperience: 7,
-  email: 'alex.morgan@example.com',
+  name: 'User',
+  initials: 'U',
+  title: 'Software Engineer',
+  location: 'Tech Hub',
+  yearsOfExperience: 3,
+  email: 'user@example.com',
   headline: 'Senior Frontend Engineer crafting thoughtful interfaces for data-dense products',
   summary:
     'Product-minded frontend engineer with 7 years of experience building design systems and high-scale interfaces for AI products. Strong advocate for type-safe codebases, accessible UI, and measurable performance. Currently deepening applied machine-learning literacy to bridge product and model teams.',

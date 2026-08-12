@@ -1,7 +1,5 @@
 import { lazy as lazyPage, Suspense, type ReactNode } from 'react'
-
 import { Route, Routes } from 'react-router-dom'
-
 import { AppLayout } from '@/components/layout/app-layout'
 import { LoaderCircle } from 'lucide-react'
 
@@ -9,8 +7,6 @@ const LandingPage = lazyPage(() => import('@/pages/landing'))
 const LoginPage = lazyPage(() => import('@/pages/login'))
 const SignupPage = lazyPage(() => import('@/pages/signup'))
 const DashboardPage = lazyPage(() => import('@/pages/dashboard'))
-const ResumePage = lazyPage(() => import('@/pages/resume'))
-const CareerProfilePage = lazyPage(() => import('@/pages/career-profile'))
 const JobsPage = lazyPage(() => import('@/pages/jobs'))
 const JobDetailPage = lazyPage(() => import('@/pages/job-detail'))
 const MatchPage = lazyPage(() => import('@/pages/match'))
@@ -36,14 +32,14 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        {/* Open Sign In / Sign Up page directly as soon as the user opens the website */}
+        <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/landing" element={<LandingPage />} />
 
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/resume" element={<ResumePage />} />
-          <Route path="/career-profile" element={<CareerProfilePage />} />
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/match" element={<MatchPage />} />

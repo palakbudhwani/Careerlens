@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Briefcase,
   Clock,
-  FileText,
   Gauge,
   GitCompare,
   LayoutDashboard,
@@ -10,7 +9,6 @@ import {
   Settings,
   TrendingUp,
   UserCog,
-  UserRound,
   Video,
 } from 'lucide-react'
 
@@ -31,8 +29,6 @@ export const navGroups: NavGroup[] = [
     label: 'Overview',
     items: [
       { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, end: true },
-      { label: 'Resume Intelligence', to: '/resume', icon: FileText },
-      { label: 'Career Profile', to: '/career-profile', icon: UserRound },
     ],
   },
   {

@@ -1,14 +1,11 @@
 import { useId } from 'react'
-
 import { motion, useReducedMotion } from 'framer-motion'
-import { Briefcase, Sparkles, Target, Upload } from 'lucide-react'
+import { Briefcase, Sparkles, Target } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { CountUp } from '@/components/landing/count-up'
 import { Button } from '@/components/ui/button'
 import type { DashboardData } from '@/components/dashboard/dashboard-data'
-import { condenseText } from '@/components/dashboard/dashboard-data'
-import { useResumeUpload } from '@/components/resume/resume-upload-provider'
 
 const easeOut: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
@@ -47,17 +44,9 @@ function ReadinessRing({ value }: { value: number }) {
 }
 
 export function CareerHero({ data }: { data: DashboardData }) {
-  const { candidate, greeting, careerReadiness, matchCount, strongMatchCount, criticalGapCount } =
-    data
-  const { openResumeUpload } = useResumeUpload()
-
-  const detailLine = [
-    candidate.title,
-    candidate.location,
-    candidate.yearsOfExperience > 0 ? `${candidate.yearsOfExperience} years of experience` : '',
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  const { candidate, careerReadiness, matchCount, strongMatchCount, criticalGapCount } = data
+  const storedName = typeof window !== 'undefined' ? window.localStorage.getItem('careerlens.user_name') : null
+  const displayName = storedName || (candidate.name && candidate.name !== 'Your Profile' ? candidate.name.split(' ')[0] : 'User')
 
   return (
     <motion.section
@@ -77,7 +66,7 @@ export function CareerHero({ data }: { data: DashboardData }) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
               <Sparkles className="size-3.5" aria-hidden />
-              AI Career Dashboard
+              AI Career Intelligence Hub
             </span>
             {candidate.targetRole && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
@@ -88,26 +77,22 @@ export function CareerHero({ data }: { data: DashboardData }) {
           </div>
 
           <h1 className="mt-4 font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-            {greeting}, {candidate.name.split(' ')[0]}
+            Hello, {displayName}!
           </h1>
-          {detailLine && (
-            <p className="mt-2 text-sm font-medium text-white/85 sm:text-base">{detailLine}</p>
-          )}
-          {candidate.summary && (
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/75 sm:text-[15px]">
-              {condenseText(candidate.summary)}
-            </p>
-          )}
+          <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-white/90 sm:text-base">
+            Welcome to CareerLens! Follow our step-by-step guidance below to upload your resume, identify skill gaps, upskill with curated courses, practice AI mock interviews, and explore active job matches.
+          </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Button
-              size="lg"
-              className="bg-white text-brand-700 shadow-lg hover:bg-white/90 hover:text-brand-700 dark:bg-white dark:text-brand-700"
-              leftIcon={<Upload className="size-4" aria-hidden />}
-              onClick={openResumeUpload}
-            >
-              Upload resume
-            </Button>
+            <Link to="/skill-gaps">
+              <Button
+                size="lg"
+                className="bg-white text-brand-700 shadow-lg hover:bg-white/90 hover:text-brand-700 dark:bg-white dark:text-brand-700"
+                leftIcon={<Sparkles className="size-4 text-brand-600" aria-hidden />}
+              >
+                Analyze Skill Gaps & Resume
+              </Button>
+            </Link>
             <Link to="/jobs">
               <Button
                 size="lg"
@@ -115,7 +100,7 @@ export function CareerHero({ data }: { data: DashboardData }) {
                 className="border-white/30 bg-white/10 text-white hover:bg-white/15 hover:text-white"
                 leftIcon={<Briefcase className="size-4" aria-hidden />}
               >
-                Explore jobs
+                Explore Active Jobs
               </Button>
             </Link>
           </div>

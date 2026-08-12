@@ -15,16 +15,26 @@ import type {
   SkillGap,
 } from '@/types'
 
-/**
- * Central data facade for the frontend demo.
- *
- * Every feature slices reads domain data through this store so the UI never
- * imports mock arrays directly. When a real backend arrives, only the
- * implementations below change — components stay untouched (the same
- * signatures will resolve to async calls).
- */
+function resolveUserInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'U'
+  return parts.map((p) => p[0]).join('').slice(0, 2).toUpperCase()
+}
+
 export const mockStore = {
   getCandidate(): Candidate {
+    const storedUserName = typeof window !== 'undefined' ? window.localStorage.getItem('careerlens.user_name') : null
+    const storedUserEmail = typeof window !== 'undefined' ? window.localStorage.getItem('careerlens.user_email') : null
+    
+    if (storedUserName && storedUserName.trim()) {
+      const name = storedUserName.trim()
+      return {
+        ...candidate,
+        name,
+        initials: resolveUserInitials(name),
+        email: storedUserEmail || candidate.email,
+      }
+    }
     return candidate
   },
 
