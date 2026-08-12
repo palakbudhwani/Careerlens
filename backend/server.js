@@ -4,6 +4,7 @@ import multer from 'multer';
 import dotenv from 'dotenv';
 import pdf from 'pdf-parse';
 import { parseResume, analyzeMatch, generateQuestions, evaluateAnswer } from './llm.js';
+import { analyzeSkillGaps, generateCareerGrowthPlan } from './skillGapLlm.js';
 import { 
   createSession, 
   getSession, 
@@ -564,6 +565,38 @@ app.post('/api/v1/mock-interview/transcribe-audio', audioUpload.single('audio'),
       success: true,
       transcript: transcript
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * Route: POST /api/v1/skill-gaps/analyze
+ */
+app.post('/api/v1/skill-gaps/analyze', async (req, res, next) => {
+  try {
+    const { resumeText, parsedSkills, targetRole, jobDescription } = req.body;
+
+    console.log(`Analyzing skill gaps for target role: ${targetRole || 'Software Engineer'}...`);
+    const result = await analyzeSkillGaps(resumeText, parsedSkills, targetRole, jobDescription);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * Route: POST /api/v1/career-growth/plan
+ */
+app.post('/api/v1/career-growth/plan', async (req, res, next) => {
+  try {
+    const { missingSkills, targetRole, resumeText } = req.body;
+
+    console.log(`Generating career growth plan for target role: ${targetRole || 'Software Engineer'}...`);
+    const result = await generateCareerGrowthPlan(missingSkills, targetRole, resumeText);
+
+    return res.status(200).json(result);
   } catch (error) {
     next(error);
   }

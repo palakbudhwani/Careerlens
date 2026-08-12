@@ -163,6 +163,50 @@ export interface MockInterviewCompleteResponse {
   hiringRecommendation: string;
 }
 
+export interface SkillGapItem {
+  name: string;
+  category: 'technical' | 'tool' | 'soft' | string;
+  priority: 'High' | 'Medium' | 'Low' | string;
+  currentProficiency: string;
+  requiredProficiency: string;
+  description: string;
+}
+
+export interface SkillGapAnalysisResponse {
+  targetRole: string;
+  readinessScore: number;
+  summary: string;
+  matchingSkills: string[];
+  requiredSkills: string[];
+  missingSkills: SkillGapItem[];
+}
+
+export interface CourseRecommendation {
+  id: string;
+  skillName: string;
+  title: string;
+  provider: string;
+  url: string;
+  type: string;
+  duration: string;
+  level: string;
+  description: string;
+}
+
+export interface CareerMilestone {
+  phase: string;
+  focus: string;
+  action: string;
+  targetOutcome: string;
+}
+
+export interface CareerGrowthPlanResponse {
+  targetRole: string;
+  summary: string;
+  courses: CourseRecommendation[];
+  milestones: CareerMilestone[];
+}
+
 /**
  * Handle API response helper
  */
@@ -380,5 +424,40 @@ export const apiService = {
       body: formData
     });
     return handleResponse<{ success: boolean; transcript: string }>(response);
+  },
+
+  /**
+   * Analyze skill gaps between candidate resume/skills and target role
+   * POST /api/v1/skill-gaps/analyze
+   */
+  async analyzeSkillGaps(
+    resumeText: string,
+    parsedSkills: string[],
+    targetRole: string,
+    jobDescription?: string
+  ): Promise<SkillGapAnalysisResponse> {
+    const response = await fetch(`${API_BASE_URL}/skill-gaps/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resumeText, parsedSkills, targetRole, jobDescription }),
+    });
+    return handleResponse<SkillGapAnalysisResponse>(response);
+  },
+
+  /**
+   * Generate career growth upskilling plan with course links
+   * POST /api/v1/career-growth/plan
+   */
+  async getCareerGrowthPlan(
+    missingSkills: Array<string | SkillGapItem>,
+    targetRole: string,
+    resumeText?: string
+  ): Promise<CareerGrowthPlanResponse> {
+    const response = await fetch(`${API_BASE_URL}/career-growth/plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ missingSkills, targetRole, resumeText }),
+    });
+    return handleResponse<CareerGrowthPlanResponse>(response);
   }
 };
