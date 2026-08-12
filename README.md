@@ -10,7 +10,7 @@ It features a robust client interface built in React and a secure Express backen
 
 1. **ATS Match Analysis**: Upload a PDF resume to parse contents in real time, score your ATS alignment, identify matching strengths, and discover missing skill gaps.
 2. **Dual-Questionnaire Interview Generator**: Generates two distinct question sets:
-   * **Resume-Based**: Scans your resume text and target projects to ask pinpointed technical questions about your actual work (*e.g. AI Tutor, GoRizz*).
+   * **Resume-Based**: Scans your resume text and target projects to ask pinpointed technical questions about your actual work 
    * **Role-Based**: Evaluates technical capability against the job's core requirements.
 3. **Proctored AI Mock Interview Workspace**: 
    * **Round 1 (Aptitude)**: Logic and reasoning Multiple Choice Questions (MCQs).
