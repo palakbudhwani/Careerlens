@@ -184,9 +184,9 @@ function UserMenu() {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-destructive transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-muted/70"
               >
-                <LogOut className="size-4" aria-hidden />
+                <LogOut className="size-4 text-muted-foreground" aria-hidden />
                 Sign out
               </button>
             </div>
