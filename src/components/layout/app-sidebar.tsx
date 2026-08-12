@@ -1,12 +1,17 @@
 import { Link, NavLink } from 'react-router-dom'
 
+import { candidateFromStoredResume } from '@/lib/effective-candidate'
 import { mockStore } from '@/lib/mock-store'
+import { useStoredResume } from '@/lib/resume-store'
 import { cn } from '@/lib/utils'
 import { navGroups } from '@/data/navigation'
 import { Logo } from '@/components/ui/logo'
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const candidate = mockStore.getCandidate()
+  const storedResume = useStoredResume()
+  const candidate = storedResume
+    ? candidateFromStoredResume(storedResume)
+    : mockStore.getCandidate()
 
   return (
     <aside className="flex h-full flex-col bg-card">
@@ -79,7 +84,11 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             <span className="block truncate text-sm font-medium text-foreground">
               {candidate.name}
             </span>
-            <span className="block truncate text-xs text-muted-foreground">{candidate.title}</span>
+            {candidate.title && (
+              <span className="block truncate text-xs text-muted-foreground">
+                {candidate.title}
+              </span>
+            )}
           </span>
         </Link>
       </div>

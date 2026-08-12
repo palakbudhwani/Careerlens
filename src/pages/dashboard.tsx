@@ -1,72 +1,80 @@
-import { LayoutDashboard } from 'lucide-react'
+import type { ReactNode } from 'react'
 
-import { Card } from '@/components/ui/card'
-import { PlaceholderPage } from '@/pages/placeholder-page'
-import { Skeleton } from '@/components/ui/skeleton'
-import { mockStore } from '@/lib/mock-store'
+import { motion } from 'framer-motion'
 
-function DashboardPreview() {
-  const candidate = mockStore.getCandidate()
+import { CareerHero } from '@/components/dashboard/career-hero'
+import { useDashboardData } from '@/components/dashboard/dashboard-data'
+import { MetricTiles } from '@/components/dashboard/metric-tiles'
+import { OnboardingState } from '@/components/dashboard/onboarding'
+import { QuickActions } from '@/components/dashboard/quick-actions'
+import { RecommendationsPanel } from '@/components/dashboard/recommendations-panel'
+import { ResumeOverview } from '@/components/dashboard/resume-overview'
+import { SkillGapsPanel } from '@/components/dashboard/skill-gaps-panel'
+import { TopMatches } from '@/components/dashboard/top-matches'
+import { TopSkills } from '@/components/dashboard/top-skills'
+import { cn } from '@/lib/utils'
 
+const easeOut: [number, number, number, number] = [0.22, 1, 0.36, 1]
+
+function Reveal({
+  children,
+  delay = 0,
+  className,
+}: {
+  children: ReactNode
+  delay?: number
+  className?: string
+}) {
   return (
-    <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-xl border border-brand-200 bg-gradient-to-br from-brand-600 to-blue-600 p-6 text-white shadow-card dark:border-brand-500/30">
-        <div className="absolute -right-10 -top-16 size-48 rounded-full bg-white/10 blur-2xl" aria-hidden />
-        <p className="text-sm font-medium text-brand-100">Welcome back</p>
-        <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">
-          {candidate.name.split(' ')[0]}, your career is looking strong.
-        </h2>
-        <p className="mt-1.5 max-w-lg text-sm text-brand-100">
-          Your resume is fully parsed and 4 matches are waiting. CareerLens is analyzing how your
-          profile measures up against your target role.
-        </p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[0, 1, 2, 3].map((index) => (
-          <Card key={index}>
-            <div className="space-y-2.5 p-5">
-              <Skeleton className="h-3.5 w-1/2" />
-              <Skeleton className="h-8 w-2/3" />
-              <Skeleton className="h-3.5 w-3/4" />
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.5, delay, ease: easeOut }}
+    >
+      {children}
+    </motion.div>
   )
 }
 
 export default function DashboardPage() {
+  const data = useDashboardData()
+
+  if (!data.hasAnalysis) {
+    return <OnboardingState />
+  }
+
   return (
-    <PlaceholderPage
-      title="Dashboard"
-      description="Your career command center — match overview, skill health, and next best actions."
-      icon={LayoutDashboard}
-      preview={<DashboardPreview />}
-      features={[
-        {
-          label: 'Match overview',
-          description: 'Your best current matches and live fit scores at a glance.',
-        },
-        {
-          label: 'Resume health',
-          description: 'Completeness, coverage, and suggested resume improvements.',
-        },
-        {
-          label: 'Skill trend',
-          description: 'How your skill set is growing relative to your target roles.',
-        },
-        {
-          label: 'Next actions',
-          description: 'A prioritized queue of the highest-impact moves for this week.',
-        },
-      ]}
-      context={
-        <>
-          The dashboard landing experience is built in the next milestone. The banner and cards above
-          are a preview using your seeded demo profile.
-        </>
-      }
-    />
+    <div className="space-y-6">
+      <CareerHero data={data} />
+
+      <Reveal>
+        <MetricTiles data={data} />
+      </Reveal>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Reveal delay={0.05} className="space-y-6">
+          <ResumeOverview data={data} />
+          <TopSkills data={data} />
+        </Reveal>
+        <Reveal delay={0.1} className={cn('lg:col-span-2')}>
+          <TopMatches data={data} />
+        </Reveal>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Reveal delay={0.05}>
+          <SkillGapsPanel data={data} />
+        </Reveal>
+        <Reveal delay={0.1}>
+          <RecommendationsPanel data={data} />
+        </Reveal>
+      </div>
+
+      <Reveal delay={0.05}>
+        <QuickActions />
+      </Reveal>
+    </div>
   )
 }

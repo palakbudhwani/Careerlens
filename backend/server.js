@@ -4,18 +4,6 @@ import multer from 'multer';
 import dotenv from 'dotenv';
 import pdf from 'pdf-parse';
 import { parseResume, analyzeMatch, generateQuestions, evaluateAnswer } from './llm.js';
-import { 
-  createSession, 
-  getSession, 
-  addViolation, 
-  recordAnswer, 
-  completeSession 
-} from './mockInterviewStore.js';
-import { 
-  generateMockQuestions, 
-  evaluateMockAnswer, 
-  generateFinalScorecard 
-} from './mockInterviewLlm.js';
 
 dotenv.config();
 
@@ -65,6 +53,19 @@ const upload = multer({
 function countWords(str) {
   if (!str) return 0;
   return str.trim().split(/\s+/).filter(word => word.length > 0).length;
+}
+
+// pdf-parse bundles several pdf.js builds. Use the newest bundled one: older
+// builds (the default v1.10.100) are far less tolerant of modern PDFs.
+const PDF_PARSE_VERSION = 'v2.0.550';
+
+// Multer stores uploads in memory as Node Buffers. Node allocates small Buffers
+// from a shared pool, so they carry a non-zero byteOffset into a larger
+// ArrayBuffer. The bundled pdf.js reads the xref table from that raw
+// ArrayBuffer and fails with "bad XRef entry" on perfectly valid PDFs.
+// Copying into a fresh Uint8Array (byteOffset 0) fixes this reliably.
+function toPlainPdfBytes(buffer) {
+  return new Uint8Array(buffer);
 }
 
 // Global request log
@@ -181,7 +182,7 @@ app.post('/api/v1/resume/parse', upload.single('file'), async (req, res, next) =
     // Parse PDF buffer to text
     let parsedPdf;
     try {
-      parsedPdf = await pdf(req.file.buffer);
+      parsedPdf = await pdf(toPlainPdfBytes(req.file.buffer), { version: PDF_PARSE_VERSION });
     } catch (pdfError) {
       console.error('PDF parsing library failed:', pdfError);
       return res.status(422).json({
@@ -231,339 +232,6 @@ app.post('/api/v1/interview/evaluate', async (req, res, next) => {
     const result = await evaluateAnswer(question, answer);
     
     return res.status(200).json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Multer configuration for audio file uploads
-const audioUpload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('audio/') || file.originalname.endsWith('.webm') || file.originalname.endsWith('.wav')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only audio files are supported!'), false);
-    }
-  },
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
-});
-
-/**
- * Route: POST /api/v1/mock-interview/start
- */
-app.post('/api/v1/mock-interview/start', async (req, res, next) => {
-  try {
-    const { candidateId, jobDescription, resumeText, targetRole } = req.body;
-
-    if (!candidateId || !jobDescription || !resumeText || !targetRole) {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Missing required fields: candidateId, jobDescription, resumeText, and targetRole must be provided.'
-      });
-    }
-
-    console.log(`Generating mock interview questions for role: ${targetRole}...`);
-    const questions = await generateMockQuestions(resumeText, jobDescription, targetRole);
-
-    const sessionId = `interview-session-${Math.floor(1000 + Math.random() * 9000)}`;
-    const session = createSession(sessionId, candidateId, jobDescription, resumeText, targetRole, questions);
-
-    return res.status(200).json({
-      sessionId: session.sessionId,
-      status: session.status,
-      rounds: [
-        { roundId: 1, name: "Aptitude", durationMinutes: 15, totalQuestions: session.roundQuestions.round1.length },
-        { roundId: 2, name: "Technical", durationMinutes: 25, totalQuestions: session.roundQuestions.round2.length },
-        { roundId: 3, name: "HR & Behavioral", durationMinutes: 15, totalQuestions: session.roundQuestions.round3.length }
-      ],
-      proctorConfig: session.proctorConfig
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * Route: GET /api/v1/mock-interview/questions
- */
-app.get('/api/v1/mock-interview/questions', async (req, res, next) => {
-  try {
-    const { sessionId, roundId } = req.query;
-
-    if (!sessionId || !roundId) {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Missing required query parameters: sessionId and roundId must be provided.'
-      });
-    }
-
-    const session = getSession(sessionId);
-    if (!session) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: `Interview session with ID ${sessionId} not found.`
-      });
-    }
-
-    const rId = parseInt(roundId, 10);
-    let questionsList = [];
-    let roundName = "";
-
-    if (rId === 1) {
-      questionsList = session.roundQuestions.round1;
-      roundName = "Aptitude";
-    } else if (rId === 2) {
-      questionsList = session.roundQuestions.round2;
-      roundName = "Technical";
-    } else if (rId === 3) {
-      questionsList = session.roundQuestions.round3;
-      roundName = "HR & Behavioral";
-    } else {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Invalid roundId. Must be 1, 2, or 3.'
-      });
-    }
-
-    // Strip correctAnswerIndex from MCQs so candidates can't cheat by viewing JSON!
-    const safeQuestionsList = questionsList.map(q => {
-      if (q.type === 'MCQ') {
-        const { correctAnswerIndex, ...rest } = q;
-        return rest;
-      }
-      return q;
-    });
-
-    return res.status(200).json({
-      roundId: rId,
-      roundName,
-      questions: safeQuestionsList
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * Route: POST /api/v1/mock-interview/submit-answer
- */
-app.post('/api/v1/mock-interview/submit-answer', async (req, res, next) => {
-  try {
-    const { sessionId, roundId, questionId, userAnswerText } = req.body;
-
-    if (!sessionId || !roundId || !questionId || userAnswerText === undefined) {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Missing required fields: sessionId, roundId, questionId, and userAnswerText must be provided.'
-      });
-    }
-
-    const session = getSession(sessionId);
-    if (!session) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: `Interview session with ID ${sessionId} not found.`
-      });
-    }
-
-    if (session.status === 'TERMINATED') {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: 'Session has been terminated due to proctor violations.'
-      });
-    }
-
-    const rId = parseInt(roundId, 10);
-    let evaluationResult = null;
-
-    if (rId === 1) {
-      const questionsList = session.roundQuestions.round1;
-      const question = questionsList.find(q => q.questionId === questionId);
-      
-      if (!question) {
-        return res.status(404).json({
-          error: 'Not Found',
-          message: `Question with ID ${questionId} not found in this round.`
-        });
-      }
-
-      const correctOptionIndex = question.correctAnswerIndex;
-      const correctOptionText = question.options[correctOptionIndex];
-      const isCorrect = (userAnswerText.trim().toLowerCase() === correctOptionText.trim().toLowerCase()) || 
-                        (userAnswerText.trim() === String(correctOptionIndex));
-
-      evaluationResult = {
-        score: isCorrect ? 10.0 : 0.0,
-        instantFeedback: isCorrect 
-          ? `Correct! The answer is indeed: ${correctOptionText}.` 
-          : `Incorrect. The correct answer was: ${correctOptionText}.`,
-        evaluatedCriteria: {
-          technicalAccuracy: isCorrect ? 10.0 : 0.0,
-          clarity: 10.0,
-          relevanceToRole: 10.0
-        }
-      };
-    } else if (rId === 2 || rId === 3) {
-      const questionsList = rId === 2 ? session.roundQuestions.round2 : session.roundQuestions.round3;
-      const question = questionsList.find(q => q.questionId === questionId);
-
-      if (!question) {
-        return res.status(404).json({
-          error: 'Not Found',
-          message: `Question with ID ${questionId} not found in this round.`
-        });
-      }
-
-      console.log(`Evaluating round ${rId} answer for question ${questionId}...`);
-      evaluationResult = await evaluateMockAnswer(question.questionText, userAnswerText, rId);
-    } else {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Invalid roundId. Must be 1, 2, or 3.'
-      });
-    }
-
-    const savedAnswer = recordAnswer(sessionId, questionId, userAnswerText, evaluationResult);
-
-    return res.status(200).json({
-      questionId,
-      score: savedAnswer.score,
-      instantFeedback: savedAnswer.feedback,
-      evaluatedCriteria: savedAnswer.evaluatedCriteria
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * Route: POST /api/v1/mock-interview/proctor-event
- */
-app.post('/api/v1/mock-interview/proctor-event', async (req, res, next) => {
-  try {
-    const { sessionId, violationType, timestamp } = req.body;
-
-    if (!sessionId || !violationType) {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Missing required fields: sessionId and violationType must be provided.'
-      });
-    }
-
-    const session = getSession(sessionId);
-    if (!session) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: `Interview session with ID ${sessionId} not found.`
-      });
-    }
-
-    const result = addViolation(sessionId, violationType, timestamp || new Date().toISOString());
-
-    return res.status(200).json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * Route: POST /api/v1/mock-interview/complete
- */
-app.post('/api/v1/mock-interview/complete', async (req, res, next) => {
-  try {
-    const { sessionId } = req.body;
-
-    if (!sessionId) {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Missing required fields: sessionId must be provided.'
-      });
-    }
-
-    const session = getSession(sessionId);
-    if (!session) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: `Interview session with ID ${sessionId} not found.`
-      });
-    }
-
-    completeSession(sessionId);
-
-    console.log(`Compiling final mock interview scorecard for session ${sessionId}...`);
-    const scorecard = await generateFinalScorecard(session);
-
-    let aptitudeSum = 0, aptitudeCount = 0;
-    let technicalSum = 0, technicalCount = 0;
-    let hrSum = 0, hrCount = 0;
-
-    session.roundQuestions.round1.forEach(q => {
-      const ans = session.answers[q.questionId];
-      if (ans) {
-        aptitudeSum += ans.score;
-        aptitudeCount++;
-      }
-    });
-
-    session.roundQuestions.round2.forEach(q => {
-      const ans = session.answers[q.questionId];
-      if (ans) {
-        technicalSum += ans.score;
-        technicalCount++;
-      }
-    });
-
-    session.roundQuestions.round3.forEach(q => {
-      const ans = session.answers[q.questionId];
-      if (ans) {
-        hrSum += ans.score;
-        hrCount++;
-      }
-    });
-
-    const roundBreakdown = {
-      aptitudeScore: aptitudeCount > 0 ? Math.round((aptitudeSum / (aptitudeCount * 10)) * 100) : 0,
-      technicalScore: technicalCount > 0 ? Math.round((technicalSum / (technicalCount * 10)) * 100) : 0,
-      hrScore: hrCount > 0 ? Math.round((hrSum / (hrCount * 10)) * 100) : 0
-    };
-
-    return res.status(200).json({
-      sessionId: session.sessionId,
-      overallScore: session.status === 'TERMINATED' ? 0 : scorecard.overallScore,
-      proctorStatus: session.status === 'TERMINATED' ? 'TERMINATED_DUE_TO_CHEATING' : 'PASSED',
-      totalViolationsLogged: session.violationCount,
-      roundBreakdown,
-      strengths: session.status === 'TERMINATED' ? [] : scorecard.strengths,
-      improvementAreas: scorecard.improvementAreas,
-      hiringRecommendation: scorecard.hiringRecommendation
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * Route: POST /api/v1/mock-interview/transcribe-audio
- */
-app.post('/api/v1/mock-interview/transcribe-audio', audioUpload.single('audio'), async (req, res, next) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'No audio file uploaded. Please upload an audio file under key "audio".'
-      });
-    }
-
-    console.log(`Received audio file: ${req.file.originalname} (${req.file.size} bytes)...`);
-
-    // Simulated speech-to-text response
-    const transcript = "To optimize a React application, I use React.memo to prevent unnecessary re-renders, lazy loading with React.Suspense for code splitting, and useCallback/useMemo for stable function references.";
-    
-    return res.status(200).json({
-      success: true,
-      transcript: transcript
-    });
   } catch (error) {
     next(error);
   }

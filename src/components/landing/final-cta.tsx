@@ -2,10 +2,12 @@ import { Briefcase, Upload } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Reveal } from '@/components/landing/reveal'
+import { useResumeUpload } from '@/components/resume/resume-upload-provider'
 import { Button } from '@/components/ui/button'
 import { finalCta } from '@/data/landing'
 
 export function FinalCta() {
+  const { openResumeUpload } = useResumeUpload()
   return (
     <section className="bg-background">
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
@@ -37,15 +39,14 @@ export function FinalCta() {
               </p>
 
               <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link to="/resume" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    className="w-full bg-brand-500 text-white hover:bg-brand-400 sm:w-auto"
-                    leftIcon={<Upload className="size-4" aria-hidden />}
-                  >
-                    Analyze My Resume
-                  </Button>
-                </Link>
+                <Button
+                  size="lg"
+                  className="w-full bg-brand-500 text-white hover:bg-brand-400 sm:w-auto"
+                  leftIcon={<Upload className="size-4" aria-hidden />}
+                  onClick={openResumeUpload}
+                >
+                  Analyze My Resume
+                </Button>
                 <Link to="/jobs" className="w-full sm:w-auto">
                   <Button
                     size="lg"
