@@ -20,6 +20,22 @@ export interface ParsedDetails {
     year: string;
     field?: string;
   }>;
+  phone?: string;
+  location?: string;
+  summary?: string;
+  headline?: string;
+  linkedin?: string;
+  portfolio?: string;
+  projects?: Array<{
+    name: string;
+    description: string;
+    technologies: string[];
+  }>;
+  certifications?: Array<{
+    name: string;
+    issuer?: string;
+    year?: string;
+  }>;
 }
 
 export interface ResumeParseResponse {
@@ -169,16 +185,38 @@ export const apiService = {
    * Upload and parse a PDF resume
    * POST /api/v1/resume/parse
    */
-  async parseResume(file: File): Promise<ResumeParseResponse> {
-    const formData = new FormData();
-    formData.append('file', file);
+  async parseResume(
+    file: File,
+    options: { timeoutMs?: number; signal?: AbortSignal } = {}
+  ): Promise<ResumeParseResponse> {
+    const { timeoutMs = 120_000, signal } = options;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const onAbort = () => controller.abort();
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else signal.addEventListener('abort', onAbort);
+    }
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const response = await fetch(`${API_BASE_URL}/resume/parse`, {
-      method: 'POST',
-      body: formData,
-    });
+      const response = await fetch(`${API_BASE_URL}/resume/parse`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
 
-    return handleResponse<ResumeParseResponse>(response);
+      return await handleResponse<ResumeParseResponse>(response);
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new Error('The resume analysis took too long to complete. Please try again.');
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+    }
   },
 
   /**
