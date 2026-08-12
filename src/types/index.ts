@@ -32,18 +32,32 @@ export interface Education {
 
 export interface Contact {
   email: string
-  phone: string
-  location: string
+  phone?: string
+  location?: string
   linkedin?: string
   portfolio?: string
 }
 
+export interface Project {
+  name: string
+  description: string
+  technologies: string[]
+}
+
+export interface Certification {
+  name: string
+  issuer?: string
+  year?: string
+}
+
 export interface ResumeExport {
   contact: Contact
-  summary: string
+  summary?: string
   skills: string[]
   experience: Experience[]
   education: Education[]
+  projects?: Project[]
+  certifications?: Certification[]
 }
 
 export interface Resume {
@@ -64,15 +78,20 @@ export interface Candidate {
   location: string
   yearsOfExperience: number
   email: string
-  headline: string
-  summary: string
+  headline?: string
+  summary?: string
+  phone?: string
+  linkedin?: string
+  portfolio?: string
   topSkills: Skill[]
   experience: Experience[]
   education: Education[]
-  preferredRoles: string[]
-  targetRole: string
-  openToRemote: boolean
-  desiredSalaryRange: { min: number; max: number }
+  projects?: Project[]
+  certifications?: Certification[]
+  preferredRoles?: string[]
+  targetRole?: string
+  openToRemote?: boolean
+  desiredSalaryRange?: { min: number; max: number }
 }
 
 export type JobType = 'full-time' | 'contract' | 'internship'

@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { Reveal } from '@/components/landing/reveal'
 import { SectionHeading } from '@/components/landing/section-heading'
 import { GapCard, GrowthCard, MatchCard, ResumeAnalysisCard } from '@/components/landing/showcase-cards'
+import { useResumeUpload } from '@/components/resume/resume-upload-provider'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -75,6 +76,7 @@ export function ProductShowcase() {
   const [active, setActive] = useState<TabId>('resume')
   const current = copy[active]
   const ActiveIcon = tabs.find((tab) => tab.id === active)?.icon
+  const { openResumeUpload } = useResumeUpload()
 
   return (
     <section id="product-tour" className="border-y border-border bg-muted/40">
@@ -154,11 +156,20 @@ export function ProductShowcase() {
                   ))}
                 </ul>
                 <div className="mt-6">
-                  <Link to={current.to}>
-                    <Button rightIcon={<ArrowRight className="size-4" aria-hidden />}>
+                  {active === 'resume' ? (
+                    <Button
+                      rightIcon={<ArrowRight className="size-4" aria-hidden />}
+                      onClick={openResumeUpload}
+                    >
                       {current.cta}
                     </Button>
-                  </Link>
+                  ) : (
+                    <Link to={current.to}>
+                      <Button rightIcon={<ArrowRight className="size-4" aria-hidden />}>
+                        {current.cta}
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </motion.div>
             </AnimatePresence>

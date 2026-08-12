@@ -17,6 +17,8 @@ import {
 import { Link, useNavigate } from 'react-router-dom'
 
 import { mockStore } from '@/lib/mock-store'
+import { candidateFromStoredResume } from '@/lib/effective-candidate'
+import { useStoredResume } from '@/lib/resume-store'
 import { cn } from '@/lib/utils'
 import { useClickOutside } from '@/hooks/use-click-outside'
 import { useTheme } from '@/hooks/use-theme'
@@ -134,7 +136,10 @@ function UserMenu() {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
-  const candidate = mockStore.getCandidate()
+  const storedResume = useStoredResume()
+  const candidate = storedResume
+    ? candidateFromStoredResume(storedResume)
+    : mockStore.getCandidate()
   useClickOutside(ref, () => setOpen(false))
 
   const items = [
@@ -166,7 +171,9 @@ function UserMenu() {
           >
             <div className="px-4 py-3">
               <p className="truncate text-sm font-semibold text-foreground">{candidate.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{candidate.email}</p>
+              {candidate.email && (
+                <p className="truncate text-xs text-muted-foreground">{candidate.email}</p>
+              )}
             </div>
             <Separator />
             <div className="p-1.5">

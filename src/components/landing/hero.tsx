@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { HeroPreview } from '@/components/landing/hero-preview'
 import { ScoreRing } from '@/components/landing/score-ring'
 import { Eyebrow } from '@/components/landing/section-heading'
+import { useResumeUpload } from '@/components/resume/resume-upload-provider'
 import { Button } from '@/components/ui/button'
 
 const easeOut: [number, number, number, number] = [0.22, 1, 0.36, 1]
@@ -71,6 +72,7 @@ function SkillFloatCard() {
 }
 
 export function Hero() {
+  const { openResumeUpload } = useResumeUpload()
   return (
     <section id="top" className="relative overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -103,11 +105,14 @@ export function Hero() {
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to="/resume" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto" leftIcon={<Upload className="size-4" aria-hidden />}>
-                Analyze My Resume
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              leftIcon={<Upload className="size-4" aria-hidden />}
+              onClick={openResumeUpload}
+            >
+              Analyze My Resume
+            </Button>
             <Link to="/jobs" className="w-full sm:w-auto">
               <Button size="lg" variant="outline" className="w-full sm:w-auto" rightIcon={<Briefcase className="size-4" aria-hidden />}>
                 Explore Jobs
