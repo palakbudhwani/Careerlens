@@ -15,7 +15,7 @@ if (apiKey) {
   }
 }
 
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+const DEFAULT_MODEL = 'gemini-flash-latest';
 
 // JSON Schemas for Gemini Structured Output
 const skillGapAnalysisSchema = {
