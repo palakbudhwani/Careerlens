@@ -5,22 +5,12 @@ import {
   Gauge,
   BookOpen,
   Video,
-  CheckCircle2,
-  AlertTriangle,
-  ExternalLink,
-  Calendar,
-  Layers,
-  Sparkles,
-  Search,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeader } from '@/components/ui/page-header'
 import { useStoredResume } from '@/lib/resume-store'
-import { candidateFromStoredResume } from '@/lib/effective-candidate'
 
 interface ActivityItem {
   id: string
@@ -35,7 +25,6 @@ interface ActivityItem {
 
 export default function HistoryPage() {
   const storedResume = useStoredResume()
-  const candidate = storedResume ? candidateFromStoredResume(storedResume) : null
   const [storedGaps, setStoredGaps] = useState<any>(null)
   const [activities, setActivities] = useState<ActivityItem[]>([])
 

@@ -8,8 +8,6 @@ import {
   Briefcase,
   ScanSearch,
   ArrowRight,
-  Sparkles,
-  CheckCircle2,
   Clock,
   User,
 } from 'lucide-react'
