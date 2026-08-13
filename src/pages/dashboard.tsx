@@ -87,9 +87,9 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
-              <Link to="/skill-gaps" className="block w-full">
+              <Link to="/match" className="block w-full">
                 <Button variant="primary" size="sm" className="w-full justify-between shadow-sm">
-                  <span>Upload & Analyze Skill Gaps</span>
+                  <span>Upload & Analyze Match</span>
                   <ArrowRight className="size-4" />
                 </Button>
               </Link>
