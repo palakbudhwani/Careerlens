@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import type { DragEvent } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Gauge,
   Target,
@@ -10,9 +9,6 @@ import {
   BookOpen,
   FileText,
   TrendingUp,
-  UploadCloud,
-  LoaderCircle,
-  FileUp,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -24,7 +20,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { apiService, type SkillGapAnalysisResponse, type SkillGapItem } from '@/lib/api-service'
-import { useStoredResume, writeStoredResume, type StoredResume } from '@/lib/resume-store'
+import { useStoredResume } from '@/lib/resume-store'
 import { candidateFromStoredResume } from '@/lib/effective-candidate'
 
 const PRESET_ROLES = [
@@ -41,7 +37,6 @@ export default function SkillGapsPage() {
   const storedResume = useStoredResume()
   const candidate = storedResume ? candidateFromStoredResume(storedResume) : null
   const navigate = useNavigate()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const defaultRole = candidate?.targetRole || candidate?.preferredRoles?.[0] || 'Full-Stack Engineer'
   const [selectedRole, setSelectedRole] = useState<string>(defaultRole)
@@ -52,12 +47,6 @@ export default function SkillGapsPage() {
   const [error, setError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<SkillGapAnalysisResponse | null>(null)
 
-  // Resume Upload states
-  const [uploading, setUploading] = useState<boolean>(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState<boolean>(false)
-  const [showUploadForm, setShowUploadForm] = useState<boolean>(!storedResume)
-
   useEffect(() => {
     if (candidate?.targetRole && selectedRole === 'Full-Stack Engineer' && candidate.targetRole !== 'Full-Stack Engineer') {
       setSelectedRole(candidate.targetRole)
@@ -65,11 +54,12 @@ export default function SkillGapsPage() {
   }, [candidate])
 
   const runAnalysis = async (roleToAnalyze: string) => {
+    if (!storedResume?.resumeText) return
     setLoading(true)
     setError(null)
     try {
-      const resumeText = storedResume?.resumeText || ''
-      const parsedSkills = candidate?.topSkills?.map((s) => s.name) || storedResume?.parsedDetails?.skills || []
+      const resumeText = storedResume.resumeText
+      const parsedSkills = candidate?.topSkills?.map((s) => s.name) || storedResume.parsedDetails?.skills || []
 
       const result = await apiService.analyzeSkillGaps(resumeText, parsedSkills, roleToAnalyze)
       setAnalysis(result)
@@ -84,72 +74,6 @@ export default function SkillGapsPage() {
   useEffect(() => {
     runAnalysis(selectedRole)
   }, [selectedRole, storedResume])
-
-  // Handle PDF Resume Upload
-  const handleFileUpload = async (file: File) => {
-    if (!file) return
-    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
-      setUploadError('Only PDF resume files are supported.')
-      return
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('File size must be under 5MB.')
-      return
-    }
-
-    setUploading(true)
-    setUploadError(null)
-
-    try {
-      console.log(`Parsing uploaded resume file: ${file.name}...`)
-      const parseResult = await apiService.parseResume(file)
-
-      const newStoredResume: StoredResume = {
-        fileName: file.name,
-        fileSize: file.size,
-        uploadedAt: new Date().toISOString(),
-        parsedDetails: parseResult.parsedDetails,
-        resumeText: parseResult.resumeText,
-      }
-
-      writeStoredResume(newStoredResume)
-      setShowUploadForm(false)
-
-      // Immediately run analysis with newly uploaded resume text and parsed skills
-      const parsedSkills = parseResult.parsedDetails?.skills || []
-      setLoading(true)
-      const gapResult = await apiService.analyzeSkillGaps(parseResult.resumeText, parsedSkills, selectedRole)
-      setAnalysis(gapResult)
-    } catch (err: any) {
-      console.error('Resume upload/parsing error:', err)
-      setUploadError(err.message || 'Failed to parse resume. Please ensure the backend is running.')
-    } finally {
-      setUploading(false)
-      setLoading(false)
-    }
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) handleFileUpload(file)
-  }
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const file = e.dataTransfer.files?.[0]
-    if (file) handleFileUpload(file)
-  }
 
   const handleRoleSelect = (role: string) => {
     setSelectedRole(role)
@@ -188,11 +112,46 @@ export default function SkillGapsPage() {
     return 'primary'
   }
 
+  if (!storedResume) {
+    return (
+      <div className="space-y-8 pb-12">
+        <PageHeader
+          title="Skill Gap Analysis"
+          description="Evaluate your skills against target roles to uncover missing requirements and prioritize your upskilling path."
+          icon={Gauge}
+          badge={
+            <Badge variant="primary" dot>
+              Resume Driven
+            </Badge>
+          }
+        />
+
+        <Card className="max-w-xl mx-auto border-dashed p-10 text-center space-y-6 shadow-sm mt-8">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+            <FileText className="size-6" />
+          </div>
+          <div className="space-y-2">
+            <CardTitle className="text-lg font-bold">No Active Resume Found</CardTitle>
+            <CardDescription className="max-w-sm mx-auto text-xs leading-relaxed">
+              To analyze your skill gaps, you first need to upload a resume. Please upload your resume on the Match Analysis page.
+            </CardDescription>
+          </div>
+          <div className="pt-2">
+            <Button onClick={() => navigate('/match')} className="rounded-xl px-5 flex items-center gap-1.5 mx-auto">
+              Go to Match Analysis
+              <ArrowRight className="ml-1.5 size-3.5" />
+            </Button>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8 pb-12">
       <PageHeader
         title="Skill Gap Analysis"
-        description="Upload your resume and evaluate your skills against target roles to uncover missing requirements and prioritize your upskilling path."
+        description="Evaluate your skills against target roles to uncover missing requirements and prioritize your upskilling path."
         icon={Gauge}
         badge={
           <Badge variant="primary" dot>
@@ -201,103 +160,36 @@ export default function SkillGapsPage() {
         }
       />
 
-      {/* Resume Upload Card Section */}
+      {/* Resume Context Info Banner */}
       <Card className="border-border bg-card shadow-sm">
         <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <CardTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
-                <FileText className="size-5 text-brand-600 dark:text-brand-400" />
-                Your Resume Context
-              </CardTitle>
-              <CardDescription>
-                Upload your PDF resume to extract skills automatically for instant gap evaluation.
-              </CardDescription>
-            </div>
-            {storedResume && !showUploadForm && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowUploadForm(true)}
-              >
-                <FileUp className="mr-1.5 size-3.5" /> Replace Resume
-              </Button>
-            )}
-          </div>
+          <CardTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <FileText className="size-5 text-brand-600 dark:text-brand-400" />
+            Active Resume Context
+          </CardTitle>
+          <CardDescription>
+            Using active resume uploaded from Match Analysis page.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {storedResume && !showUploadForm ? (
-            <div className="flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-900/40 dark:bg-emerald-950/20">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
-                  <CheckCircle2 className="size-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground">{storedResume.fileName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Uploaded: {new Date(storedResume.uploadedAt).toLocaleDateString()} • {storedResume.parsedDetails?.skills?.length || 0} skills detected
-                  </p>
-                </div>
+          <div className="flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-900/40 dark:bg-emerald-950/20">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                <CheckCircle2 className="size-5" />
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="success" className="text-xs">
-                  Active Resume
-                </Badge>
+              <div>
+                <p className="text-sm font-bold text-foreground">{storedResume.fileName}</p>
+                <p className="text-xs text-muted-foreground">
+                  Uploaded: {new Date(storedResume.uploadedAt).toLocaleDateString()} • {storedResume.parsedDetails?.skills?.length || 0} skills detected
+                </p>
               </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-all cursor-pointer ${
-                  isDragging
-                    ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/30'
-                    : 'border-border bg-secondary/30 hover:border-brand-300 hover:bg-secondary/50'
-                }`}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,application/pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-
-                {uploading ? (
-                  <div className="space-y-2 text-center">
-                    <LoaderCircle className="mx-auto size-8 animate-spin text-brand-600 dark:text-brand-400" />
-                    <p className="text-sm font-semibold text-foreground">Parsing Resume & Extracting Skills...</p>
-                    <p className="text-xs text-muted-foreground">Please wait a few seconds while our backend analyzes your document.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 text-center">
-                    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-950/50 dark:text-brand-400">
-                      <UploadCloud className="size-6" />
-                    </div>
-                    <p className="text-sm font-bold text-foreground">
-                      Click to upload resume PDF <span className="font-normal text-muted-foreground">or drag and drop</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">PDF files up to 5MB are supported</p>
-                  </div>
-                )}
-              </div>
-
-              {uploadError && (
-                <p className="text-xs font-semibold text-destructive">{uploadError}</p>
-              )}
-
-              {storedResume && showUploadForm && (
-                <div className="flex justify-end">
-                  <Button variant="ghost" size="sm" onClick={() => setShowUploadForm(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              )}
+            <div className="flex items-center gap-2">
+              <Badge variant="success" className="text-xs">
+                Active Resume
+              </Badge>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 

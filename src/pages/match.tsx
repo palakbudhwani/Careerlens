@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { 
   Upload, 
   FileText, 
@@ -12,7 +12,8 @@ import {
   Send,
   ScanSearch,
   FileCheck,
-  Briefcase
+  Briefcase,
+  ArrowRight
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ import { Progress } from '@/components/ui/progress'
 import { apiService } from '@/lib/api-service'
 import type { MatchAnalysisResponse, InterviewQuestion, AnswerEvaluationResponse } from '@/lib/api-service'
 import { mockStore } from '@/lib/mock-store'
+import { useStoredResume, writeStoredResume } from '@/lib/resume-store'
 
 export type InterviewDifficulty = 'Junior' | 'Mid' | 'Senior' | 'Lead'
 
@@ -34,6 +36,8 @@ export interface InterviewSessionItem {
 export default function MatchPage() {
   const { jobId } = useParams<{ jobId?: string }>()
   const fileRef = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
+  const storedResume = useStoredResume()
   
   // Available mock jobs for mapping
   const availableJobs = useMemo(() => mockStore.getJobs(), [])
@@ -112,6 +116,15 @@ export default function MatchPage() {
       setResumeText(extractedText)
       setResumeName(file.name)
 
+      // Store in global resume-store so other pages (Skill Gaps, Dashboard) get it reactively
+      writeStoredResume({
+        fileName: file.name,
+        fileSize: file.size,
+        uploadedAt: new Date().toISOString(),
+        parsedDetails: parseResult.parsedDetails,
+        resumeText: extractedText
+      })
+
       // 2. Call ATS Match Analysis Endpoint
       const analysisResult = await apiService.analyzeMatch(
         extractedText,
@@ -143,6 +156,43 @@ export default function MatchPage() {
       if (fileRef.current) fileRef.current.value = ''
     }
   }
+
+  // Auto-run analysis when storedResume loads or when selected job targets change
+  useEffect(() => {
+    if (storedResume && storedResume.resumeText && activeJobDescription) {
+      const isNewResume = storedResume.resumeText !== resumeText
+      const noAnalysisYet = !analysis
+      
+      if (isNewResume || noAnalysisYet) {
+        setResumeText(storedResume.resumeText)
+        setResumeName(storedResume.fileName)
+        
+        const runSavedMatch = async () => {
+          setLoading(true)
+          setError(null)
+          setAnalysis(null)
+          setResumeQuestions([])
+          setRoleQuestions([])
+          setSelectedQuestion(null)
+          try {
+            const analysisResult = await apiService.analyzeMatch(
+              storedResume.resumeText,
+              activeJobDescription,
+              'candidate-001',
+              activeJob?.id || 'custom-job'
+            )
+            setAnalysis(analysisResult)
+            await generateRealQuestions(storedResume.resumeText, activeJobDescription, difficulty)
+          } catch (err: any) {
+            setError(err.message || 'Failed to complete resume analysis.')
+          } finally {
+            setLoading(false)
+          }
+        }
+        runSavedMatch()
+      }
+    }
+  }, [storedResume, selectedJobId, useCustomJob])
 
   // Generates real interview questions based on parsed user data and selected difficulty
   const generateRealQuestions = async (text: string, jobDesc: string, diff: string) => {
@@ -538,13 +588,26 @@ export default function MatchPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="text-base">Missing Skills & Gaps</CardTitle>
             <CardDescription>Required keywords missing from resume</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <BadgeGroup title="" items={weaknesses} variant="destructive" />
+            {analysis && (
+              <div className="pt-4 border-t flex justify-end">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => navigate('/skill-gaps')}
+                  className="text-xs flex items-center gap-1.5"
+                >
+                  Analyze Skill Gaps Detail
+                  <ArrowRight className="size-3.5" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
