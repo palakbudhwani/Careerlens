@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { 
-  Video, 
   Mic, 
   ShieldAlert, 
   AlertTriangle, 
@@ -15,9 +14,26 @@ import {
   Play, 
   Camera, 
   Volume2, 
-  RefreshCw 
+  RefreshCw,
+  LoaderCircle
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+
+const loadScript = (src: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`)
+    if (existing) {
+      resolve()
+      return
+    }
+    const script = document.createElement('script')
+    script.src = src
+    script.async = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`))
+    document.head.appendChild(script)
+  })
+}
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { apiService } from '@/lib/api-service'
@@ -72,6 +88,15 @@ export default function MockInterviewPage() {
   const [timeLeft, setTimeLeft] = useState(900) // 15 mins default
   const timerIntervalRef = useRef<any>(null)
 
+  // Real AI Proctoring Webcam & TF.js Refs & State
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const [webcamError, setWebcamError] = useState<string | null>(null)
+  const [modelsLoaded, setModelsLoaded] = useState(false)
+  const animationFrameIdRef = useRef<number | null>(null)
+  const gazeAwayTimerRef = useRef<number | null>(null)
+
   const activeJob = useMemo(() => {
     return availableJobs.find(j => j.id === selectedJobId) || null
   }, [selectedJobId, availableJobs])
@@ -80,6 +105,255 @@ export default function MockInterviewPage() {
     if (!activeJob) return 'Software Developer Job Description'
     return `${activeJob.title} at ${activeJob.company}\n\nRequirements:\n${activeJob.requirements.join('\n')}`
   }, [activeJob])
+
+  // --- Dynamic AI Proctoring Model Loader ---
+  useEffect(() => {
+    let active = true
+    const loadAI = async () => {
+      try {
+        console.log('Loading TensorFlow.js via CDN...')
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs')
+        console.log('Loading BlazeFace and CocoSSD models...')
+        await Promise.all([
+          loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface'),
+          loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd'),
+        ])
+        if (active) {
+          setModelsLoaded(true)
+          console.log('AI models loaded successfully!')
+        }
+      } catch (err) {
+        console.error('Failed to load AI proctoring models:', err)
+        if (active) {
+          setWebcamError('Failed to load AI models. Please check your internet connection.')
+        }
+      }
+    }
+    loadAI()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  // --- Webcam Access & AI Frame Processing Loop ---
+  useEffect(() => {
+    if (step !== 'interview' || !modelsLoaded || !session) return
+
+    let localStream: MediaStream | null = null
+
+    const startWebcam = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480 },
+          audio: false, // Mic is separately handled for recording answers
+        })
+        localStream = stream
+        streamRef.current = stream
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+        }
+      } catch (err) {
+        console.error('Failed to access webcam:', err)
+        setWebcamError('Unable to access webcam. Please verify camera permissions.')
+      }
+    }
+
+    const runDetectionLoop = async () => {
+      const tf = (window as any).tf
+      const blazeface = (window as any).blazeface
+      const cocoSsd = (window as any).cocoSsd
+
+      if (!tf || !blazeface || !cocoSsd) {
+        console.error('TensorFlow libraries not available on window.')
+        return
+      }
+
+      const faceModel = await blazeface.load()
+      const objectModel = await cocoSsd.load()
+      console.log('AI Proctor models ready!')
+
+      let lastPhoneWarningTime = 0
+      let lastGazeWarningTime = 0
+
+      const triggerViolation = async (type: 'GAZE_AWAY' | 'PHONE_DETECTED') => {
+        try {
+          const timestamp = new Date().toISOString()
+          const res = await apiService.logProctorEvent(session.sessionId, type, timestamp)
+          setViolationsCount(res.currentViolations)
+          setLastWarningMsg(res.warningMessage)
+          setShowWarningAlert(true)
+
+          if (res.action === 'TERMINATE_SESSION') {
+            setStep('terminated')
+          }
+        } catch (err) {
+          console.error('Failed to log AI proctor violation:', err)
+        }
+      }
+
+      const processFrame = async () => {
+        if (!videoRef.current || !canvasRef.current) return
+        const video = videoRef.current
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext('2d')
+
+        if (!ctx) return
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width = video.videoWidth
+          canvas.height = video.videoHeight
+
+          // Draw mirrored video
+          ctx.translate(canvas.width, 0)
+          ctx.scale(-1, 1)
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          ctx.setTransform(1, 0, 0, 1, 0, 0)
+
+          try {
+            // Face detection
+            const faces = await faceModel.estimateFaces(video, false)
+            // Object/Phone detection
+            const objects = await objectModel.detect(video)
+
+            let isLookingAway = false
+            let isPhoneDetected = false
+
+            if (faces && faces.length > 0) {
+              const face = faces[0]
+              const start = face.topLeft
+              const end = face.bottomRight
+              const size = [end[0] - start[0], end[1] - start[1]]
+
+              // Draw green face bounding box
+              ctx.strokeStyle = '#10B981'
+              ctx.lineWidth = 3
+              const xPos = canvas.width - end[0]
+              ctx.strokeRect(xPos, start[1], size[0], size[1])
+
+              if (face.landmarks && face.landmarks.length >= 3) {
+                const rightEye = face.landmarks[0]
+                const leftEye = face.landmarks[1]
+                const nose = face.landmarks[2]
+
+                const distLeft = Math.abs(nose[0] - leftEye[0])
+                const distRight = Math.abs(nose[0] - rightEye[0])
+                const gazeRatio = distLeft / distRight
+
+                // Draw eyes
+                ctx.fillStyle = '#6366F1'
+                ctx.beginPath()
+                ctx.arc(canvas.width - rightEye[0], rightEye[1], 4, 0, 2 * Math.PI)
+                ctx.arc(canvas.width - leftEye[0], leftEye[1], 4, 0, 2 * Math.PI)
+                ctx.fill()
+
+                // Draw nose
+                ctx.fillStyle = '#F59E0B'
+                ctx.beginPath()
+                ctx.arc(canvas.width - nose[0], nose[1], 4, 0, 2 * Math.PI)
+                ctx.fill()
+
+                // Gaze tracking bounds check
+                if (gazeRatio > 1.7 || gazeRatio < 0.58) {
+                  isLookingAway = true
+                  ctx.strokeStyle = '#EF4444'
+                  ctx.fillStyle = '#EF4444'
+                  ctx.font = 'bold 16px sans-serif'
+                  ctx.fillText('WARNING: LOOKING AWAY', 20, 40)
+                } else {
+                  ctx.strokeStyle = '#10B981'
+                  ctx.fillStyle = '#10B981'
+                  ctx.font = 'bold 12px sans-serif'
+                  ctx.fillText('GAZE STATUS: OK', 20, 40)
+                }
+
+                // Draw gaze vector visualizer lines
+                const gazeVectorX = (gazeRatio > 1.7) ? -45 : (gazeRatio < 0.58) ? 45 : 0
+                ctx.beginPath()
+                ctx.moveTo(canvas.width - rightEye[0], rightEye[1])
+                ctx.lineTo(canvas.width - rightEye[0] - gazeVectorX, rightEye[1] - 20)
+                ctx.moveTo(canvas.width - leftEye[0], leftEye[1])
+                ctx.lineTo(canvas.width - leftEye[0] - gazeVectorX, leftEye[1] - 20)
+                ctx.stroke()
+              }
+            } else {
+              isLookingAway = true
+              ctx.fillStyle = '#EF4444'
+              ctx.font = 'bold 16px sans-serif'
+              ctx.fillText('WARNING: NO FACE DETECTED', 20, 40)
+            }
+
+            // Phone check
+            if (objects && objects.length > 0) {
+              for (const obj of objects) {
+                if (obj.class === 'cell phone' && obj.score > 0.5) {
+                  isPhoneDetected = true
+                  const [x, y, w, h] = obj.bbox
+                  ctx.strokeStyle = '#EF4444'
+                  ctx.lineWidth = 4
+                  ctx.strokeRect(canvas.width - x - w, y, w, h)
+
+                  ctx.fillStyle = '#EF4444'
+                  ctx.font = 'bold 14px sans-serif'
+                  ctx.fillText(`PROHIBITED: PHONE (${Math.round(obj.score * 100)}%)`, 20, 70)
+                }
+              }
+            }
+
+            const now = Date.now()
+
+            // Trigger violation on phone detection
+            if (isPhoneDetected) {
+              if (now - lastPhoneWarningTime > 10000) {
+                lastPhoneWarningTime = now
+                triggerViolation('PHONE_DETECTED')
+              }
+            }
+
+            // Trigger violation on looking away (3 seconds hold)
+            if (isLookingAway) {
+              if (!gazeAwayTimerRef.current) {
+                gazeAwayTimerRef.current = window.setTimeout(() => {
+                  if (now - lastGazeWarningTime > 12000) {
+                    lastGazeWarningTime = Date.now()
+                    triggerViolation('GAZE_AWAY')
+                  }
+                  gazeAwayTimerRef.current = null
+                }, 3000)
+              }
+            } else {
+              if (gazeAwayTimerRef.current) {
+                clearTimeout(gazeAwayTimerRef.current)
+                gazeAwayTimerRef.current = null
+              }
+            }
+
+          } catch (err) {
+            console.error('Frame inference error:', err)
+          }
+        }
+
+        animationFrameIdRef.current = requestAnimationFrame(processFrame)
+      }
+
+      processFrame()
+    }
+
+    startWebcam().then(() => {
+      runDetectionLoop()
+    })
+
+    return () => {
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop())
+      }
+      if (animationFrameIdRef.current) {
+        cancelAnimationFrame(animationFrameIdRef.current)
+      }
+      if (gazeAwayTimerRef.current) {
+        clearTimeout(gazeAwayTimerRef.current)
+      }
+    }
+  }, [step, modelsLoaded, session])
 
   // --- Proctoring Violations Listener ---
   useEffect(() => {
@@ -398,16 +672,36 @@ export default function MockInterviewPage() {
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 
-                {/* Simulated Webcam Box */}
-                <div className="relative aspect-video rounded-xl bg-slate-900 overflow-hidden flex items-center justify-center border">
-                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded-full text-[9px] text-white">
-                    <span className="size-1.5 rounded-full bg-red-500 animate-ping" />
-                    <span>REC: Live Webcam Feed</span>
+                {/* Real Webcam Box with AI Overlay */}
+                <div className="relative aspect-video rounded-xl bg-slate-950 overflow-hidden flex items-center justify-center border border-border">
+                  <div className="absolute top-2.5 left-2.5 z-30 flex items-center gap-1.5 bg-black/75 px-2.5 py-1 rounded-full text-[10px] text-white font-semibold">
+                    <span className="size-1.5 rounded-full bg-red-500 animate-pulse" />
+                    <span>AI Proctor Feed</span>
                   </div>
-                  <Video className="size-12 text-slate-700 animate-pulse" />
+                  
+                  {webcamError ? (
+                    <p className="text-xs text-red-500 px-4 text-center z-10">{webcamError}</p>
+                  ) : !modelsLoaded ? (
+                    <div className="text-center z-10 space-y-2">
+                      <LoaderCircle className="size-8 animate-spin mx-auto text-brand-500" />
+                      <p className="text-[11px] text-muted-foreground">Initializing AI Proctoring Models...</p>
+                    </div>
+                  ) : null}
+
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="absolute inset-0 w-full h-full object-cover z-10"
+                  />
+                  <canvas
+                    ref={canvasRef}
+                    className="absolute inset-0 w-full h-full object-cover z-20 pointer-events-none"
+                  />
                   
                   {/* Visual Waveform Overlay for Microphone */}
-                  <div className="absolute bottom-2.5 right-2.5 flex items-end gap-0.5 h-6">
+                  <div className="absolute bottom-2.5 right-2.5 z-30 flex items-end gap-0.5 h-6 bg-black/40 p-1 rounded">
                     <div className="w-1 bg-brand-500 rounded-full animate-bounce h-3" />
                     <div className="w-1 bg-brand-500 rounded-full animate-bounce h-5" style={{ animationDelay: '0.1s' }} />
                     <div className="w-1 bg-brand-500 rounded-full animate-bounce h-2" style={{ animationDelay: '0.2s' }} />

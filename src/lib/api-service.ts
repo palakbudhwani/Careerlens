@@ -388,7 +388,7 @@ export const apiService = {
    */
   async logProctorEvent(
     sessionId: string,
-    violationType: 'TAB_SWITCH' | 'WINDOW_UNFOCUS' | 'FULLSCREEN_EXITED' | 'NO_FACE_DETECTED',
+    violationType: 'TAB_SWITCH' | 'WINDOW_UNFOCUS' | 'FULLSCREEN_EXITED' | 'NO_FACE_DETECTED' | 'GAZE_AWAY' | 'PHONE_DETECTED',
     timestamp: string
   ): Promise<MockProctorEventResponse> {
     const response = await fetch(`${API_BASE_URL}/mock-interview/proctor-event`, {

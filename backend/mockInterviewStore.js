@@ -36,7 +36,12 @@ export function addViolation(sessionId, violationType, timestamp) {
   session.violationCount = session.violations.length;
 
   let action = 'WARNING_ISSUED';
-  let warningMessage = `Warning: Leaving the assessment window or violating rules is strictly prohibited. Session will auto-terminate after ${session.proctorConfig.maxAllowedViolations - session.violationCount} more attempts.`;
+  let violationLabel = 'violating rules';
+  if (violationType === 'TAB_SWITCH') violationLabel = 'switching browser tabs/windows';
+  if (violationType === 'GAZE_AWAY') violationLabel = 'looking away from the screen';
+  if (violationType === 'PHONE_DETECTED') violationLabel = 'using a mobile device / object detection warning';
+
+  let warningMessage = `Warning: Prohibited activity detected (${violationLabel}). Session will auto-terminate after ${session.proctorConfig.maxAllowedViolations - session.violationCount} more warnings.`;
 
   if (session.violationCount >= session.proctorConfig.maxAllowedViolations) {
     session.status = 'TERMINATED';
