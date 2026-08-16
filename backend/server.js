@@ -180,18 +180,25 @@ app.post('/api/v1/resume/parse', upload.single('file'), async (req, res, next) =
     console.log(`Parsing PDF file: ${req.file.originalname} (${req.file.size} bytes)...`);
 
     // Parse PDF buffer to text
-    let parsedPdf;
+    let resumeText = '';
     try {
-      parsedPdf = await pdf(req.file.buffer);
+      const parsedPdf = await pdf(req.file.buffer);
+      resumeText = parsedPdf.text;
     } catch (pdfError) {
-      console.error('PDF parsing library failed:', pdfError);
-      return res.status(422).json({
-        error: 'Unprocessable Entity',
-        message: 'Failed to extract text from the PDF file. The file may be corrupt or encrypted.'
-      });
-    }
+      console.warn('PDF parsing library failed, attempting fallback binary stream extraction...', pdfError.message);
+      try {
+        resumeText = extractTextFromCorruptedPdf(req.file.buffer);
+      } catch (fallbackError) {
+        console.error('Fallback PDF extraction also failed:', fallbackError);
+      }
 
-    const resumeText = parsedPdf.text;
+      if (!resumeText || resumeText.trim().length < 10) {
+        return res.status(422).json({
+          error: 'Unprocessable Entity',
+          message: 'Failed to extract text from the PDF file. The file may be corrupt or encrypted.'
+        });
+      }
+    }
     const wordCount = countWords(resumeText);
 
     if (wordCount < 10) {
@@ -601,6 +608,24 @@ app.post('/api/v1/career-growth/plan', async (req, res, next) => {
     next(error);
   }
 });
+
+function extractTextFromCorruptedPdf(buffer) {
+  const content = buffer.toString('binary');
+  const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+  let match;
+  let text = '';
+
+  while ((match = streamRegex.exec(content)) !== null) {
+    const streamData = match[1];
+    const textRegex = /\(([^)]+)\)\s*(?:Tj|TJ)/g;
+    let textMatch;
+    while ((textMatch = textRegex.exec(streamData)) !== null) {
+      text += textMatch[1] + ' ';
+    }
+  }
+
+  return text.trim();
+}
 
 // Central error handling middleware
 app.use((err, req, res, next) => {
