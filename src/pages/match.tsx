@@ -375,6 +375,36 @@ export default function MatchPage() {
         </CardContent>
       </Card>
 
+      {storedResume?.parsedDetails?.isAuthentic === false && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-950/30 dark:bg-red-950/20 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300">
+              <AlertCircle className="size-5 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-red-950 dark:text-red-200">
+                Resume Verification Warning
+              </h3>
+              <p className="mt-1 text-xs text-red-800 dark:text-red-300 leading-relaxed">
+                Our AI validator has detected formatting anomalies or potential authenticity issues in this document. Please verify that this is a valid, authentic resume document.
+              </p>
+            </div>
+          </div>
+          {storedResume.parsedDetails.validationErrors && storedResume.parsedDetails.validationErrors.length > 0 && (
+            <div className="pl-13 text-xs space-y-1.5 text-red-800 dark:text-red-300">
+              <p className="font-semibold uppercase tracking-wider text-[10px]">Detected Inconsistencies:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {storedResume.parsedDetails.validationErrors.map((err, idx) => (
+                  <span key={idx} className="font-mono bg-red-100/60 dark:bg-red-950/40 px-2.5 py-1 rounded text-red-900 dark:text-red-300">
+                    • {err}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Resume Analysis Section */}
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">

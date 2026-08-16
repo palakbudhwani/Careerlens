@@ -36,6 +36,8 @@ export interface ParsedDetails {
     issuer?: string;
     year?: string;
   }>;
+  isAuthentic?: boolean;
+  validationErrors?: string[];
 }
 
 export interface ResumeParseResponse {

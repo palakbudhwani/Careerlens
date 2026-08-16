@@ -56,9 +56,18 @@ const resumeParserSchema = {
         },
         required: ["degree", "institution", "year"]
       }
+    },
+    isAuthentic: {
+      type: "BOOLEAN",
+      description: "Set to false if the resume text is identified as fake, dummy template placeholder text, a book page, cooking recipe, contains impossible work timelines (e.g. 20 years of experience in React), or has extreme keyword stuffing meant to fool ATS. Otherwise set to true."
+    },
+    validationErrors: {
+      type: "ARRAY",
+      items: { type: "STRING" },
+      description: "List of reasons explaining why the resume failed verification (e.g., 'Overlapping timeline anomaly', 'Generated template placeholder', 'Unrelated text content'). Leave empty if authentic."
     }
   },
-  required: ["name", "email", "skills", "workExperience", "education"]
+  required: ["name", "email", "skills", "workExperience", "education", "isAuthentic", "validationErrors"]
 };
 
 const matchAnalysisSchema = {
@@ -765,6 +774,8 @@ function extractResumeDetails(text) {
     portfolio: undefined,
     projects: [],
     certifications: [],
+    isAuthentic: true,
+    validationErrors: [],
   };
   if (!text || typeof text !== 'string') return empty;
 
@@ -815,6 +826,8 @@ function mergeParsedDetails(ruleParsed, llmParsed) {
     merged.skills = takeArray(llmParsed.skills, ruleParsed.skills);
     merged.workExperience = takeArray(llmParsed.workExperience, ruleParsed.workExperience);
     merged.education = takeArray(llmParsed.education, ruleParsed.education);
+    merged.isAuthentic = llmParsed.isAuthentic !== undefined ? llmParsed.isAuthentic : ruleParsed.isAuthentic;
+    merged.validationErrors = Array.isArray(llmParsed.validationErrors) ? llmParsed.validationErrors : ruleParsed.validationErrors;
   }
   return merged;
 }
