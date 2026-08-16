@@ -112,11 +112,42 @@ app.post('/api/v1/match/analyze', async (req, res, next) => {
     }
 
     console.log(`Analyzing match (Resume: ${resumeWordCount} words, Job: ${jobWordCount} words)...`);
+    
+    // Parse resume first to check authenticity
+    const parsedResume = await parseResume(resumeText);
+    if (parsedResume.isAuthentic === false) {
+      return res.status(200).json({
+        matchId: "match-" + Math.floor(Math.random() * 100000),
+        atsScore: 0,
+        breakdown: {
+          skillsMatchScore: 0,
+          experienceScore: 0,
+          educationScore: 0,
+          keywordDensityScore: 0
+        },
+        summary: "Match analysis blocked: The uploaded resume failed verification checks. " + (parsedResume.validationErrors || []).join(", "),
+        matchingSkills: [],
+        missingSkills: [],
+        gaps: [],
+        atsFeedback: {
+          formattingNotes: ["Resume verification failed: " + (parsedResume.validationErrors || []).join(", ")],
+          actionVerbsCheck: "Failed verification",
+          keywordFrequency: []
+        },
+        isAuthentic: false,
+        validationErrors: parsedResume.validationErrors || []
+      });
+    }
+
     const analysisResult = await analyzeMatch(resumeText, jobDescription);
     
     // Attach input IDs if passed
     if (candidateId) analysisResult.candidateId = candidateId;
     if (jobId) analysisResult.jobId = jobId;
+
+    // Attach authenticity flags to the response
+    analysisResult.isAuthentic = parsedResume.isAuthentic;
+    analysisResult.validationErrors = parsedResume.validationErrors;
 
     return res.status(200).json(analysisResult);
   } catch (error) {

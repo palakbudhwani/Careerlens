@@ -78,6 +78,8 @@ export interface MatchAnalysisResponse {
   };
   candidateId?: string;
   jobId?: string;
+  isAuthentic?: boolean;
+  validationErrors?: string[];
 }
 
 export interface InterviewQuestion {

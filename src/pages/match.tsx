@@ -89,6 +89,9 @@ export default function MatchPage() {
     return `${activeJob.title} at ${activeJob.company}\n\nJob Description:\n${activeJob.description}\n\nRequirements:\n${activeJob.requirements.join('\n')}\n\nPreferred:\n${activeJob.preferred.join('\n')}`
   }, [useCustomJob, customJobDescription, activeJob])
 
+  const isResumeFake = storedResume?.parsedDetails?.isAuthentic === false || analysis?.isAuthentic === false
+  const validationErrors = analysis?.validationErrors || storedResume?.parsedDetails?.validationErrors || []
+
   // Upload PDF, Parse & Perform ATS Match
   const processUploadedResume = async (file: File) => {
     if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
@@ -375,7 +378,7 @@ export default function MatchPage() {
         </CardContent>
       </Card>
 
-      {storedResume?.parsedDetails?.isAuthentic === false && (
+      {isResumeFake && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-950/30 dark:bg-red-950/20 space-y-3">
           <div className="flex items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300">
@@ -390,11 +393,11 @@ export default function MatchPage() {
               </p>
             </div>
           </div>
-          {storedResume.parsedDetails.validationErrors && storedResume.parsedDetails.validationErrors.length > 0 && (
+          {validationErrors.length > 0 && (
             <div className="pl-13 text-xs space-y-1.5 text-red-800 dark:text-red-300">
               <p className="font-semibold uppercase tracking-wider text-[10px]">Detected Inconsistencies:</p>
               <div className="flex flex-wrap gap-1.5">
-                {storedResume.parsedDetails.validationErrors.map((err, idx) => (
+                {validationErrors.map((err, idx) => (
                   <span key={idx} className="font-mono bg-red-100/60 dark:bg-red-950/40 px-2.5 py-1 rounded text-red-900 dark:text-red-300">
                     • {err}
                   </span>
@@ -434,9 +437,11 @@ export default function MatchPage() {
                     <Progress value={analysis.breakdown.skillsMatchScore} className="mt-2 h-1.5" />
                   </div>
                   <div className="rounded-xl border bg-emerald-50/50 dark:bg-emerald-950/20 p-4">
-                    <p className="text-xs font-medium uppercase tracking-wider text-emerald-600">ATS Match Score</p>
-                    <p className="mt-1 font-display text-2xl font-bold text-emerald-600">{analysis.atsScore}%</p>
-                    <Progress value={analysis.atsScore} className="mt-2 h-1.5" />
+                    <div className="flex-1">
+                      <p className={`text-xs font-medium uppercase tracking-wider ${isResumeFake ? 'text-red-600' : 'text-emerald-600'}`}>ATS Match Score</p>
+                      <p className={`mt-1 font-display text-2xl font-bold ${isResumeFake ? 'text-red-600' : 'text-emerald-600'}`}>{isResumeFake ? 'Blocked' : `${analysis.atsScore}%`}</p>
+                      <Progress value={isResumeFake ? 0 : analysis.atsScore} className={`mt-2 h-1.5 ${isResumeFake ? '[&>div]:bg-red-500 bg-red-100 dark:bg-red-950/20' : ''}`} />
+                    </div>
                   </div>
                 </div>
 
@@ -444,25 +449,25 @@ export default function MatchPage() {
                 <div className="space-y-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Detailed Score Attribution</p>
                   <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-                    <div className="rounded-xl border bg-brand-50/30 dark:bg-brand-950/10 p-3.5">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-brand-600">Skills (40%)</p>
-                      <p className="mt-1 font-display text-lg font-bold text-brand-600">{analysis.breakdown.skillsMatchScore}%</p>
-                      <Progress value={analysis.breakdown.skillsMatchScore} className="mt-1.5 h-1" />
+                    <div className={`rounded-xl border p-3.5 ${isResumeFake ? 'bg-red-50/20 dark:bg-red-950/5 border-red-200/50' : 'bg-brand-50/30 dark:bg-brand-950/10'}`}>
+                      <p className={`text-[10px] font-medium uppercase tracking-wider ${isResumeFake ? 'text-red-500' : 'text-brand-600'}`}>Skills (40%)</p>
+                      <p className={`mt-1 font-display text-lg font-bold ${isResumeFake ? 'text-red-500' : 'text-brand-600'}`}>{isResumeFake ? '0%' : `${analysis.breakdown.skillsMatchScore}%`}</p>
+                      <Progress value={isResumeFake ? 0 : analysis.breakdown.skillsMatchScore} className={`mt-1.5 h-1 ${isResumeFake ? '[&>div]:bg-red-500 bg-red-100 dark:bg-red-950/20' : ''}`} />
                     </div>
-                    <div className="rounded-xl border bg-indigo-50/30 dark:bg-indigo-950/10 p-3.5">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-indigo-600">Experience (30%)</p>
-                      <p className="mt-1 font-display text-lg font-bold text-indigo-600">{analysis.breakdown.experienceScore}%</p>
-                      <Progress value={analysis.breakdown.experienceScore} className="mt-1.5 h-1" />
+                    <div className={`rounded-xl border p-3.5 ${isResumeFake ? 'bg-red-50/20 dark:bg-red-950/5 border-red-200/50' : 'bg-indigo-50/30 dark:bg-indigo-950/10'}`}>
+                      <p className={`text-[10px] font-medium uppercase tracking-wider ${isResumeFake ? 'text-red-500' : 'text-indigo-600'}`}>Experience (30%)</p>
+                      <p className={`mt-1 font-display text-lg font-bold ${isResumeFake ? 'text-red-500' : 'text-indigo-600'}`}>{isResumeFake ? '0%' : `${analysis.breakdown.experienceScore}%`}</p>
+                      <Progress value={isResumeFake ? 0 : analysis.breakdown.experienceScore} className={`mt-1.5 h-1 ${isResumeFake ? '[&>div]:bg-red-500 bg-red-100 dark:bg-red-950/20' : ''}`} />
                     </div>
-                    <div className="rounded-xl border bg-amber-50/30 dark:bg-amber-950/10 p-3.5">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-amber-600">Education (10%)</p>
-                      <p className="mt-1 font-display text-lg font-bold text-amber-600">{analysis.breakdown.educationScore}%</p>
-                      <Progress value={analysis.breakdown.educationScore} className="mt-1.5 h-1" />
+                    <div className={`rounded-xl border p-3.5 ${isResumeFake ? 'bg-red-50/20 dark:bg-red-950/5 border-red-200/50' : 'bg-amber-50/30 dark:bg-amber-950/10'}`}>
+                      <p className={`text-[10px] font-medium uppercase tracking-wider ${isResumeFake ? 'text-red-500' : 'text-amber-600'}`}>Education (10%)</p>
+                      <p className={`mt-1 font-display text-lg font-bold ${isResumeFake ? 'text-red-500' : 'text-amber-600'}`}>{isResumeFake ? '0%' : `${analysis.breakdown.educationScore}%`}</p>
+                      <Progress value={isResumeFake ? 0 : analysis.breakdown.educationScore} className={`mt-1.5 h-1 ${isResumeFake ? '[&>div]:bg-red-500 bg-red-100 dark:bg-red-950/20' : ''}`} />
                     </div>
-                    <div className="rounded-xl border bg-teal-50/30 dark:bg-teal-950/10 p-3.5">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-teal-600">Keyword (20%)</p>
-                      <p className="mt-1 font-display text-lg font-bold text-teal-600">{analysis.breakdown.keywordDensityScore}%</p>
-                      <Progress value={analysis.breakdown.keywordDensityScore} className="mt-1.5 h-1" />
+                    <div className={`rounded-xl border p-3.5 ${isResumeFake ? 'bg-red-50/20 dark:bg-red-950/5 border-red-200/50' : 'bg-teal-50/30 dark:bg-teal-950/10'}`}>
+                      <p className={`text-[10px] font-medium uppercase tracking-wider ${isResumeFake ? 'text-red-500' : 'text-teal-600'}`}>Keyword (20%)</p>
+                      <p className={`mt-1 font-display text-lg font-bold ${isResumeFake ? 'text-red-500' : 'text-teal-600'}`}>{isResumeFake ? '0%' : `${analysis.breakdown.keywordDensityScore}%`}</p>
+                      <Progress value={isResumeFake ? 0 : analysis.breakdown.keywordDensityScore} className={`mt-1.5 h-1 ${isResumeFake ? '[&>div]:bg-red-500 bg-red-100 dark:bg-red-950/20' : ''}`} />
                     </div>
                   </div>
                 </div>
@@ -572,12 +577,20 @@ export default function MatchPage() {
             <div className="space-y-4">
               <div>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-display text-5xl font-extrabold text-brand-600 dark:text-brand-400">
-                    {analysis ? analysis.atsScore : 0}
+                  <span className={`font-display text-5xl font-extrabold ${isResumeFake ? 'text-red-500 dark:text-red-400' : 'text-brand-600 dark:text-brand-400'}`}>
+                    {isResumeFake ? 0 : (analysis ? analysis.atsScore : 0)}
                   </span>
                   <span className="text-sm font-medium text-muted-foreground">/ 100</span>
                 </div>
-                <Progress value={analysis ? analysis.atsScore : 0} className="mt-3 h-2" />
+                {isResumeFake && (
+                  <div className="mt-2 text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider bg-red-100/50 dark:bg-red-950/30 px-2.5 py-1 rounded w-fit">
+                    Score Blocked: Verification Failed
+                  </div>
+                )}
+                <Progress 
+                  value={isResumeFake ? 0 : (analysis ? analysis.atsScore : 0)} 
+                  className={`mt-3 h-2 ${isResumeFake ? '[&>div]:bg-red-500 bg-red-100 dark:bg-red-950/20' : ''}`} 
+                />
               </div>
 
               {analysis && (

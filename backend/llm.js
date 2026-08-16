@@ -221,6 +221,7 @@ You must critically evaluate the authenticity of the text:
 1. If the text is NOT a resume (e.g. it is a cooking recipe, song lyrics, random character dump, textbook page, dummy lorem ipsum template, or empty placeholder text), set "isAuthentic" to false and add "Unrelated text content / placeholder detected" to "validationErrors".
 2. If the resume contains impossible timeline anomalies (e.g. listing 10 years of experience in React when React was released in 2013, or working full-time jobs at the same time in completely different cities), set "isAuthentic" to false and add "Impossible timeline anomaly" to "validationErrors".
 3. If the resume contains extreme keyword stuffing (e.g. lists of the exact same skill repeated dozens of times to trick ATS search), set "isAuthentic" to false and add "Extreme keyword stuffing detected" to "validationErrors".
+4. If the resume uses standard placeholder/dummy names (such as "John Doe", "Jane Doe", "Your Name", "[Your Name]"), or contains bracketed placeholders like "[Company Name]", "[Insert Degree]", or "[Your Email Here]", set "isAuthentic" to false and add "Placeholder template contents detected" to "validationErrors".
 
 If none of these issues are present, set "isAuthentic" to true and keep "validationErrors" empty.`;
   const prompt = `Please parse the following resume text:\n\n${resumeText}`;
