@@ -213,7 +213,16 @@ async function callLLM(prompt, systemInstruction, schema) {
  * projects, certifications).
  */
 export async function parseResume(resumeText) {
-  const systemInstruction = `You are a resume parsing AI. Extract structured details from the resume text into the requested JSON schema. Be highly accurate, do not invent details, and structure the work experience highlights as bullet-point lists.`;
+  const systemInstruction = `You are a resume parsing AI. Extract structured details from the resume text into the requested JSON schema. 
+Be highly accurate, do not invent details, and structure the work experience highlights as bullet-point lists.
+
+CRITICAL SECURITY AND AUTHENTICITY VALIDATION:
+You must critically evaluate the authenticity of the text:
+1. If the text is NOT a resume (e.g. it is a cooking recipe, song lyrics, random character dump, textbook page, dummy lorem ipsum template, or empty placeholder text), set "isAuthentic" to false and add "Unrelated text content / placeholder detected" to "validationErrors".
+2. If the resume contains impossible timeline anomalies (e.g. listing 10 years of experience in React when React was released in 2013, or working full-time jobs at the same time in completely different cities), set "isAuthentic" to false and add "Impossible timeline anomaly" to "validationErrors".
+3. If the resume contains extreme keyword stuffing (e.g. lists of the exact same skill repeated dozens of times to trick ATS search), set "isAuthentic" to false and add "Extreme keyword stuffing detected" to "validationErrors".
+
+If none of these issues are present, set "isAuthentic" to true and keep "validationErrors" empty.`;
   const prompt = `Please parse the following resume text:\n\n${resumeText}`;
 
   const ruleParsed = extractResumeDetails(resumeText);
@@ -777,7 +786,13 @@ function extractResumeDetails(text) {
     isAuthentic: true,
     validationErrors: [],
   };
-  if (!text || typeof text !== 'string') return empty;
+  if (!text || typeof text !== 'string' || text.trim().length < 150) {
+    return {
+      ...empty,
+      isAuthentic: false,
+      validationErrors: ['Document text content is empty or too short to be a valid resume.']
+    };
+  }
 
   const lines = text.split(/\r?\n/).map((l) => l.trim());
   const nonEmpty = lines.filter(Boolean);
