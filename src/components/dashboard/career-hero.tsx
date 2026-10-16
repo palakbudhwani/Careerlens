@@ -68,7 +68,7 @@ export function CareerHero({ data }: { data: DashboardData }) {
               <Sparkles className="size-3.5" aria-hidden />
               AI Career Intelligence Hub
             </span>
-            {candidate.targetRole && (
+            {data.hasAnalysis && candidate.targetRole && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
                 <Target className="size-3.5" aria-hidden />
                 Targeting {candidate.targetRole}

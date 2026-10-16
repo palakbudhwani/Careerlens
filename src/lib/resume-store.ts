@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react'
 import type { ParsedDetails } from '@/lib/api-service'
 
 /**
- * Result of a successful resume parse, persisted locally.
+ * Result of a successful resume parse, held for the current browser session.
  *
- * This becomes the seed for the personalized CareerLens profile in a later
- * step. For now it simply records that the user has uploaded/analyzed a resume
- * so the Dashboard can transition out of the onboarding state.
+ * The resume is deliberately NOT persisted: every fresh session starts with no
+ * resume loaded, and only a resume explicitly uploaded during this session is
+ * used for analysis. There is no localStorage read path, so a stale resume can
+ * never be restored on refresh.
  */
 export interface StoredResume {
   fileName: string
@@ -17,7 +18,12 @@ export interface StoredResume {
   resumeText: string
 }
 
-const STORAGE_KEY = 'careerlens.resume'
+// Keys written by earlier versions of CareerLens. The resume key is no longer
+// read or written at all; both the resume and the analysis results derived
+// from it (the skill-gap handoff) are removed on startup so nothing stale can
+// resurface. Unrelated settings (theme, profile fields, accounts) are untouched.
+const LEGACY_RESUME_KEY = 'careerlens.resume'
+const SKILL_GAPS_KEY = 'careerlens.skillgaps'
 
 type Listener = () => void
 
@@ -27,39 +33,47 @@ function notifyListeners(): void {
   listeners.forEach((listener) => listener())
 }
 
-export function readStoredResume(): StoredResume | null {
+function removeStorageItem(key: string): void {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as StoredResume
-    if (!parsed || typeof parsed.fileName !== 'string') return null
-    if (!parsed.parsedDetails || typeof parsed.parsedDetails !== 'object') return null
-    return parsed
+    window.localStorage.removeItem(key)
   } catch {
-    return null
+    // storage may be unavailable
   }
 }
 
+/**
+ * Startup cleanup (called once from main.tsx): removes previously persisted
+ * resume data and the analysis results derived from it. Safe to call repeatedly.
+ */
+export function clearPersistedResumeData(): void {
+  removeStorageItem(LEGACY_RESUME_KEY)
+  removeStorageItem(SKILL_GAPS_KEY)
+}
+
+// Session-scoped resume. Starts empty on every page load; replaced only when
+// the user explicitly uploads a file, cleared on logout/new upload.
+let sessionResume: StoredResume | null = null
+
+export function readStoredResume(): StoredResume | null {
+  return sessionResume
+}
+
 export function writeStoredResume(resume: StoredResume): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(resume))
-  } catch {
-    // storage may be unavailable; consumers still get notified below
-  }
+  sessionResume = resume
+  // A new upload invalidates every analysis derived from the previous resume.
+  removeStorageItem(SKILL_GAPS_KEY)
   notifyListeners()
 }
 
 export function clearStoredResume(): void {
-  try {
-    window.localStorage.removeItem(STORAGE_KEY)
-  } catch {
-    // ignore storage errors
-  }
+  sessionResume = null
+  removeStorageItem(LEGACY_RESUME_KEY)
+  removeStorageItem(SKILL_GAPS_KEY)
   notifyListeners()
 }
 
 /**
- * Reactive view of the stored resume. Subscribes so consumers re-render when
+ * Reactive view of the session resume. Subscribes so consumers re-render when
  * a resume is written or cleared from anywhere in the app.
  */
 export function useStoredResume(): StoredResume | null {

@@ -104,15 +104,19 @@ export interface Job {
   company: string
   location: string
   type: JobType
-  workMode: WorkMode
-  salaryRange: { currency: string; min: number; max: number }
-  postedDaysAgo: number
+  workMode?: WorkMode
+  domain: string
+  experience?: string
+  salaryRange?: { currency: string; min: number; max: number }
+  postedDaysAgo?: number
   description: string
-  responsibilities: string[]
+  responsibilities?: string[]
   requirements: string[]
-  preferred: string[]
+  preferred?: string[]
   skills: Skill[]
   tags: string[]
+  source?: string
+  redirectUrl?: string
   matchScore?: number
   matchLevel?: MatchLevel
 }

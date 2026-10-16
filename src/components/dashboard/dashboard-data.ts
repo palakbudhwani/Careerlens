@@ -91,21 +91,24 @@ export function useDashboardData(): DashboardData {
   const uploadedResume = useStoredResume()
 
   return useMemo(() => {
+    // Only the resume uploaded in this session drives the dashboard. With no
+    // upload there is no resume, no matches, and no analysis results — the
+    // seeded demo data is never used as a stand-in.
     const candidate = uploadedResume
       ? candidateFromStoredResume(uploadedResume)
       : mockStore.getCandidate()
-    const resume = uploadedResume ? resumeFromStoredResume(uploadedResume) : mockStore.getResume()
+    const resume = uploadedResume ? resumeFromStoredResume(uploadedResume) : undefined
     const jobs = mockStore.getJobs()
     const matches = uploadedResume
       ? deriveJobMatches(uploadedResume, candidate, jobs)
-      : mockStore.getMatches()
+      : []
 
     const rankedMatches = [...matches].sort((a, b) => b.score - a.score)
     const skillGaps = uploadedResume
       ? deriveSkillGapsForProfile(rankedMatches.slice(0, 4), (jobId) =>
           jobs.find((job) => job.id === jobId),
         )
-      : mockStore.getSkillGaps()
+      : []
     const recommendations = uploadedResume
       ? deriveRecommendationsForProfile(
           rankedMatches.slice(0, 3),
@@ -113,7 +116,7 @@ export function useDashboardData(): DashboardData {
           candidate,
           (jobId) => jobs.find((job) => job.id === jobId),
         )
-      : mockStore.getRecommendations()
+      : []
 
     const hasAnalysis = Boolean(uploadedResume)
 

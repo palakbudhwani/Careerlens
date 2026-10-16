@@ -146,7 +146,7 @@ export default function HistoryPage() {
             </span>
             <div>
               <p className="text-xl font-extrabold text-foreground">
-                {storedGaps?.missingSkills?.length || 4}
+                {storedGaps?.missingSkills?.length ?? 0}
               </p>
               <p className="text-xs text-muted-foreground font-medium">Skill Gaps Flagged</p>
             </div>

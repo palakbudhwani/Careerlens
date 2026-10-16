@@ -65,7 +65,8 @@ export function recordAnswer(sessionId, questionId, userAnswerText, evaluation) 
     userAnswerText,
     score: evaluation.score,
     feedback: evaluation.instantFeedback,
-    evaluatedCriteria: evaluation.evaluatedCriteria
+    evaluatedCriteria: evaluation.evaluatedCriteria,
+    source: evaluation.source
   };
 
   return session.answers[questionId];

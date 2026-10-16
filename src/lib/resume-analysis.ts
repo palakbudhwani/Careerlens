@@ -109,8 +109,8 @@ function jobSignalKeys(job: Job): Set<string> {
     job.title,
     job.description,
     ...job.requirements,
-    ...job.preferred,
-    ...job.responsibilities,
+    ...(job.preferred ?? []),
+    ...(job.responsibilities ?? []),
   ].join(' ')
   return tokenize(text)
 }

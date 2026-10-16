@@ -16,7 +16,7 @@ export const history: HistoryEntry[] = [
     description: 'Scored 92% — strong match across hard skills, leadership, and AI experience.',
     createdAt: '2026-08-08T08:10:00Z',
     score: 92,
-    href: '/match/job-001',
+    href: '/match',
   },
   {
     id: 'hst-003',
@@ -25,7 +25,7 @@ export const history: HistoryEntry[] = [
     description: 'Scored 84% — mentorship and architecture strength recognized; platform scope flagged.',
     createdAt: '2026-08-08T08:24:00Z',
     score: 84,
-    href: '/match/job-002',
+    href: '/match',
   },
   {
     id: 'hst-004',
@@ -58,7 +58,7 @@ export const history: HistoryEntry[] = [
     description: 'Scored 78% — product instincts strong; LLM hands-on experience is the gap.',
     createdAt: '2026-08-07T20:32:00Z',
     score: 78,
-    href: '/match/job-003',
+    href: '/match',
   },
 ]
 

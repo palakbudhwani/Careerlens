@@ -1,10 +1,14 @@
 import {
   ArrowLeft,
   Banknote,
+  Bookmark,
   Briefcase,
   Building2,
   CheckCircle2,
   Clock,
+  ExternalLink,
+  GitCompare,
+  GraduationCap,
   MapPin,
   ScanSearch,
   Sparkles,
@@ -13,12 +17,16 @@ import {
 } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
+import { CompanyLogo } from '@/components/jobs/company-logo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Progress } from '@/components/ui/progress'
+import { useCompareSelection } from '@/lib/compare-store'
+import { formatJobType, formatWorkMode } from '@/lib/job-utils'
 import { mockStore } from '@/lib/mock-store'
+import { toggleSavedJob, useSavedJobs } from '@/lib/saved-jobs-store'
 import { formatSalaryRange } from '@/lib/utils'
 import type { JobMatch, MatchLevel } from '@/types'
 
@@ -39,6 +47,13 @@ export default function JobDetailPage() {
   const job = id ? mockStore.getJob(id) : undefined
   const match: JobMatch | undefined = job ? mockStore.getMatchForJob(job.id) : undefined
 
+  const savedIds = useSavedJobs()
+  const { ids: compareIds, toggle: toggleCompare, remaining: compareRemaining } =
+    useCompareSelection()
+  const isSaved = job ? savedIds.includes(job.id) : false
+  const isCompared = job ? compareIds.includes(job.id) : false
+  const compareDisabled = compareRemaining <= 0 && !isCompared
+
   if (!job) {
     return (
       <EmptyState
@@ -57,47 +72,106 @@ export default function JobDetailPage() {
   }
 
   const hasScore = typeof job.matchScore === 'number' && Boolean(job.matchLevel)
+  const workMode = formatWorkMode(job)
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <div className="mb-1.5 flex flex-wrap items-center gap-2">
-            <Badge variant="outline">/{job.id}</Badge>
-            {hasScore ? (
-              <Badge variant={levelVariant[job.matchLevel as MatchLevel]} dot>
-                {job.matchScore}% fit · {levelLabel[job.matchLevel as MatchLevel]}
-              </Badge>
-            ) : (
-              <Badge variant="neutral" dot>
-                Not scored
-              </Badge>
-            )}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 gap-4">
+          <CompanyLogo company={job.company} size="lg" className="mt-0.5" />
+          <div className="min-w-0">
+            <div className="mb-1.5 flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{job.domain}</Badge>
+              {job.experience && <Badge variant="outline">{job.experience}</Badge>}
+              <Badge variant="outline">Source: {job.source ?? 'Original employer listing'}</Badge>
+              {hasScore ? (
+                <Badge variant={levelVariant[job.matchLevel as MatchLevel]} dot>
+                  {job.matchScore}% fit · {levelLabel[job.matchLevel as MatchLevel]}
+                </Badge>
+              ) : (
+                <Badge variant="neutral" dot>
+                  Not scored
+                </Badge>
+              )}
+            </div>
+            <h1 className="font-display text-2xl font-bold tracking-tight">{job.title}</h1>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Building2 className="size-3.5" aria-hidden />
+                {job.company}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="size-3.5" aria-hidden />
+                {job.location}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Briefcase className="size-3.5" aria-hidden />
+                {formatJobType(job.type)}
+                {workMode ? ` · ${workMode}` : ''}
+              </span>
+              {job.experience && (
+                <span className="inline-flex items-center gap-1.5">
+                  <GraduationCap className="size-3.5" aria-hidden />
+                  {job.experience}
+                </span>
+              )}
+              {job.salaryRange && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Banknote className="size-3.5" aria-hidden />
+                  {formatSalaryRange(
+                    job.salaryRange.min,
+                    job.salaryRange.max,
+                    job.salaryRange.currency,
+                  )}
+                </span>
+              )}
+              {typeof job.postedDaysAgo === 'number' && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="size-3.5" aria-hidden />
+                  Posted {job.postedDaysAgo} {job.postedDaysAgo === 1 ? 'day' : 'days'} ago
+                </span>
+              )}
+            </p>
           </div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">{job.title}</h1>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <Building2 className="size-3.5" aria-hidden />
-              {job.company}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="size-3.5" aria-hidden />
-              {job.location}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Banknote className="size-3.5" aria-hidden />
-              {formatSalaryRange(job.salaryRange.min, job.salaryRange.max)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Clock className="size-3.5" aria-hidden />
-              Posted {job.postedDaysAgo} {job.postedDaysAgo === 1 ? 'day' : 'days'} ago
-            </span>
-          </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link to="/jobs">
             <Button variant="outline" size="sm" leftIcon={<ArrowLeft className="size-3.5" aria-hidden />}>
               Back to jobs
+            </Button>
+          </Link>
+          <Button
+            variant={isSaved ? 'secondary' : 'outline'}
+            size="sm"
+            aria-pressed={isSaved}
+            data-testid="save-job-detail"
+            aria-label={isSaved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`}
+            onClick={() => toggleSavedJob(job.id)}
+            leftIcon={
+              <Bookmark
+                className={`size-3.5 ${isSaved ? 'fill-current text-brand-600 dark:text-brand-400' : ''}`}
+                aria-hidden
+              />
+            }
+          >
+            {isSaved ? 'Saved' : 'Save'}
+          </Button>
+          <Button
+            variant={isCompared ? 'secondary' : 'outline'}
+            size="sm"
+            aria-pressed={isCompared}
+            disabled={compareDisabled}
+            data-testid="compare-job-detail"
+            aria-label={`Compare ${job.title}`}
+            title={compareDisabled ? 'Comparison is limited to 3 jobs' : undefined}
+            onClick={() => toggleCompare(job.id)}
+            leftIcon={<GitCompare className="size-3.5" aria-hidden />}
+          >
+            {isCompared ? 'In compare' : 'Compare'}
+          </Button>
+          <Link to={`/compare`}>
+            <Button variant="outline" size="sm" leftIcon={<GitCompare className="size-3.5" aria-hidden />}>
+              View comparison
             </Button>
           </Link>
           <Link to={`/match/${job.id}`}>
@@ -114,7 +188,8 @@ export default function JobDetailPage() {
             <CardHeader>
               <CardTitle>About this role</CardTitle>
               <CardDescription>
-                {job.company} · {job.type} · {job.workMode}
+                {job.company} · {formatJobType(job.type)}
+                {workMode ? ` · ${workMode}` : ''}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -122,22 +197,24 @@ export default function JobDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Responsibilities</CardTitle>
-              <CardDescription>What the day-to-day looks like</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {job.responsibilities.map((item) => (
-                  <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand-600 dark:text-brand-400" aria-hidden />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          {job.responsibilities && job.responsibilities.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Responsibilities</CardTitle>
+                <CardDescription>What the day-to-day looks like</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {job.responsibilities.map((item) => (
+                    <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand-600 dark:text-brand-400" aria-hidden />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid gap-6 sm:grid-cols-2">
             <Card>
@@ -156,26 +233,53 @@ export default function JobDetailPage() {
                 </ul>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Preferred</CardTitle>
-                <CardDescription>Nice-to-have background</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {job.preferred.map((item) => (
-                    <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand-600/70 dark:text-brand-400/70" aria-hidden />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+            {job.preferred && job.preferred.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Preferred</CardTitle>
+                  <CardDescription>Nice-to-have background</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {job.preferred.map((item) => (
+                      <li key={item} className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand-600/70 dark:text-brand-400/70" aria-hidden />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
         <div className="space-y-6">
+          {job.redirectUrl && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ExternalLink className="size-4 text-brand-600" aria-hidden />
+                  Apply
+                </CardTitle>
+                <CardDescription>Opens the original listing in a new tab</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <a href={job.redirectUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <Button className="w-full" rightIcon={<ExternalLink className="size-4" aria-hidden />}>
+                    Apply on Original Website
+                  </Button>
+                </a>
+                <p className="text-[11px] text-muted-foreground">
+                  Listing source:{' '}
+                  <span className="font-medium text-foreground">
+                    {job.source ?? 'Original employer listing'}
+                  </span>
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

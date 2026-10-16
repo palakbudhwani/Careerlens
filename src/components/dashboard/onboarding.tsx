@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Briefcase, Gauge, Sparkles, Upload } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import { useResumeUpload } from '@/components/resume/resume-upload-provider'
+import { useResumeUpload } from '@/components/resume/resume-upload-context'
 import { Button } from '@/components/ui/button'
 import { LogoMark } from '@/components/ui/logo'
 import type { LucideIcon } from 'lucide-react'

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   TrendingUp,
   ExternalLink,
@@ -10,6 +10,7 @@ import {
   Sparkles,
   Calendar,
   CheckSquare,
+  FileText,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -17,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeader } from '@/components/ui/page-header'
+import { ResultSourceNote } from '@/components/ui/result-source'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   apiService,
@@ -24,61 +26,108 @@ import {
   type CourseRecommendation,
   type CareerMilestone,
 } from '@/lib/api-service'
-import { useStoredResume } from '@/lib/resume-store'
+import { useStoredResume, type StoredResume } from '@/lib/resume-store'
+import { createRunGuard } from '@/lib/run-guard'
 import { candidateFromStoredResume } from '@/lib/effective-candidate'
+
+// Reads the persisted skill-gap handoff (written by the Skill Gaps page) with
+// a candidate-based role fallback. Pure, so it can seed initial state and
+// re-sync whenever the stored resume changes without triggering redundant
+// re-fetches when the values are unchanged.
+function loadStoredGaps(storedResume: StoredResume | null): { role: string; skills: string[] } {
+  const candidate = storedResume ? candidateFromStoredResume(storedResume) : null
+  let role = candidate?.targetRole || candidate?.preferredRoles?.[0] || 'Full-Stack Engineer'
+  let skills: string[] = ['TypeScript', 'Docker', 'System Design', 'PostgreSQL']
+
+  try {
+    const storedGaps = window.localStorage.getItem('careerlens.skillgaps')
+    if (storedGaps) {
+      const parsed = JSON.parse(storedGaps)
+      if (parsed.targetRole) role = parsed.targetRole
+      if (Array.isArray(parsed.missingSkills)) {
+        skills = parsed.missingSkills.map((s: any) => (typeof s === 'string' ? s : s.name))
+      }
+    }
+  } catch (e) {
+    console.error('Failed to parse stored skill gaps:', e)
+  }
+
+  return { role, skills }
+}
 
 export default function CareerGrowthPage() {
   const storedResume = useStoredResume()
-  const candidate = storedResume ? candidateFromStoredResume(storedResume) : null
 
-  const [targetRole, setTargetRole] = useState<string>('Full-Stack Engineer')
-  const [missingSkills, setMissingSkills] = useState<string[]>([])
+  const [initialGaps] = useState(() => loadStoredGaps(storedResume))
+  const [targetRole, setTargetRole] = useState<string>(initialGaps.role)
+  const [missingSkills, setMissingSkills] = useState<string[]>(initialGaps.skills)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [growthPlan, setGrowthPlan] = useState<CareerGrowthPlanResponse | null>(null)
   const [completedActions, setCompletedActions] = useState<Record<string, boolean>>({})
 
+  // Re-sync role/skills when the stored resume or skill-gap handoff changes,
+  // keeping the same state references when nothing actually changed so the
+  // plan is not re-fetched needlessly.
   useEffect(() => {
-    let role = candidate?.targetRole || candidate?.preferredRoles?.[0] || 'Full-Stack Engineer'
-    let skills: string[] = ['TypeScript', 'Docker', 'System Design', 'PostgreSQL']
-
-    try {
-      const storedGaps = window.localStorage.getItem('careerlens.skillgaps')
-      if (storedGaps) {
-        const parsed = JSON.parse(storedGaps)
-        if (parsed.targetRole) role = parsed.targetRole
-        if (Array.isArray(parsed.missingSkills)) {
-          skills = parsed.missingSkills.map((s: any) => (typeof s === 'string' ? s : s.name))
-        }
-      }
-    } catch (e) {
-      console.error('Failed to parse stored skill gaps:', e)
-    }
-
-    setTargetRole(role)
-    setMissingSkills(skills)
+    const next = loadStoredGaps(storedResume)
+    setTargetRole(prev => (prev === next.role ? prev : next.role))
+    setMissingSkills(prev =>
+      prev.length === next.skills.length && prev.every((value, index) => value === next.skills[index])
+        ? prev
+        : next.skills
+    )
   }, [storedResume])
 
-  const fetchGrowthPlan = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const resumeText = storedResume?.resumeText || ''
-      const plan = await apiService.getCareerGrowthPlan(missingSkills, targetRole, resumeText)
-      setGrowthPlan(plan)
-    } catch (err: any) {
-      console.error('Failed to load career growth plan:', err)
-      setError(err.message || 'Failed to fetch course recommendations.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Request coordinator: identical (resume, role, skills) requests are
+  // deduplicated (StrictMode double-mounts and re-renders never re-fire a
+  // completed run) and stale/superseded responses are discarded. It is
+  // invalidated whenever the session resume changes or is cleared so a late
+  // response for a previous resume can never overwrite the current plan.
+  const planGuardRef = useRef(createRunGuard())
+
+  const fetchGrowthPlan = useCallback(
+    async (opts: { force?: boolean } = {}) => {
+      const resumeText = storedResume?.resumeText
+      // Never call the AI provider without a currently uploaded resume.
+      if (!resumeText) return
+
+      const guard = planGuardRef.current
+      const seq = guard.begin(JSON.stringify([resumeText, targetRole, missingSkills]), opts)
+      if (seq === null) return
+
+      setLoading(true)
+      setError(null)
+      // Drop the previous resume's plan before the new one loads.
+      setGrowthPlan(null)
+      try {
+        const plan = await apiService.getCareerGrowthPlan(missingSkills, targetRole, resumeText)
+        if (!guard.isCurrent(seq)) return
+        guard.markCompleted(seq)
+        setGrowthPlan(plan)
+      } catch (err: any) {
+        if (!guard.isCurrent(seq)) return
+        console.error('Failed to load career growth plan:', err)
+        setError(err.message || 'Failed to fetch course recommendations.')
+      } finally {
+        if (guard.end(seq)) setLoading(false)
+      }
+    },
+    [storedResume, targetRole, missingSkills]
+  )
 
   useEffect(() => {
-    if (targetRole) {
-      fetchGrowthPlan()
+    if (!storedResume?.resumeText) {
+      // No resume uploaded in this session: discard anything in flight, drop
+      // stale results, and never call the AI provider.
+      planGuardRef.current.invalidate()
+      setGrowthPlan(null)
+      setLoading(false)
+      setError(null)
+      return
     }
-  }, [targetRole, missingSkills])
+    if (targetRole) void fetchGrowthPlan()
+  }, [storedResume, targetRole, missingSkills, fetchGrowthPlan])
 
   const toggleActionItem = (id: string) => {
     setCompletedActions((prev) => ({
@@ -108,6 +157,28 @@ export default function CareerGrowthPage() {
         }
       />
 
+      {!storedResume?.resumeText ? (
+        <Card className="max-w-xl mx-auto border-dashed p-10 text-center space-y-6 shadow-sm mt-8">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+            <FileText className="size-6" />
+          </div>
+          <div className="space-y-2">
+            <CardTitle className="text-lg font-bold">No Active Resume Found</CardTitle>
+            <CardDescription className="max-w-sm mx-auto text-xs leading-relaxed">
+              Upload your resume to get started. Career growth recommendations are always generated from the resume you upload on the Match Analysis page.
+            </CardDescription>
+          </div>
+          <div className="pt-2">
+            <Link to="/match">
+              <Button className="rounded-xl px-5 flex items-center gap-1.5 mx-auto">
+                Go to Match Analysis
+                <ArrowRight className="ml-1.5 size-3.5" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      ) : (
+        <>
       <Card className="border-border bg-card shadow-sm">
         <CardContent className="p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -132,7 +203,7 @@ export default function CareerGrowthPage() {
                   Change Target Role / Gaps
                 </Button>
               </Link>
-              <Button variant="secondary" size="sm" onClick={fetchGrowthPlan} disabled={loading}>
+              <Button variant="secondary" size="sm" onClick={() => fetchGrowthPlan({ force: true })} disabled={loading}>
                 <RefreshCw className={`mr-1.5 size-3.5 ${loading ? 'animate-spin' : ''}`} /> Re-analyze
               </Button>
             </div>
@@ -160,7 +231,7 @@ export default function CareerGrowthPage() {
         <Card className="border-destructive/30 bg-destructive/10 p-5 text-destructive">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">{error}</p>
-            <Button variant="outline" size="sm" onClick={fetchGrowthPlan}>
+            <Button variant="outline" size="sm" onClick={() => fetchGrowthPlan({ force: true })}>
               <RefreshCw className="mr-1.5 size-3.5" /> Retry
             </Button>
           </div>
@@ -176,6 +247,7 @@ export default function CareerGrowthPage() {
                 <div>
                   <p className="text-sm font-semibold text-foreground">Growth Roadmap Strategy</p>
                   <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{growthPlan.summary}</p>
+                  <ResultSourceNote source={growthPlan.source} className="mt-2" />
                 </div>
               </div>
             </Card>
@@ -324,6 +396,8 @@ export default function CareerGrowthPage() {
             </div>
           </Card>
         </div>
+      )}
+        </>
       )}
     </div>
   )

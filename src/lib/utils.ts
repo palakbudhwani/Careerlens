@@ -5,16 +5,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-const formatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-})
+const formatters = new Map<string, Intl.NumberFormat>()
 
-export function formatCurrency(value: number): string {
-  return formatter.format(value)
+function currencyFormatter(currency: string): Intl.NumberFormat {
+  const key = `${currency}`
+  const existing = formatters.get(key)
+  if (existing) return existing
+
+  const formatter = new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  })
+  formatters.set(key, formatter)
+  return formatter
 }
 
-export function formatSalaryRange(min: number, max: number): string {
-  return `${formatCurrency(min)} – ${formatCurrency(max)}`
+export function formatCurrency(value: number, currency = 'USD'): string {
+  return currencyFormatter(currency).format(value)
+}
+
+export function formatSalaryRange(min: number, max: number, currency = 'USD'): string {
+  return `${formatCurrency(min, currency)} – ${formatCurrency(max, currency)}`
 }

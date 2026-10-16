@@ -18,29 +18,20 @@ import {
 import { Link } from 'react-router-dom'
 
 import { ScoreRing } from '@/components/landing/score-ring'
+import { CompanyLogo } from '@/components/jobs/company-logo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Progress } from '@/components/ui/progress'
 import { Select } from '@/components/ui/select'
+import { useCompareSelection } from '@/lib/compare-store'
+import { deriveExperienceLevel, formatJobType, formatWorkMode } from '@/lib/job-utils'
 import { mockStore } from '@/lib/mock-store'
 import { formatSalaryRange } from '@/lib/utils'
 import type { Job, JobMatch, MatchLevel } from '@/types'
 
 const easeOut: [number, number, number, number] = [0.22, 1, 0.36, 1]
-
-const typeLabels: Record<Job['type'], string> = {
-  'full-time': 'Full-time',
-  contract: 'Contract',
-  internship: 'Internship',
-}
-
-const workModeLabels: Record<Job['workMode'], string> = {
-  remote: 'Remote',
-  hybrid: 'Hybrid',
-  onsite: 'On-site',
-}
 
 const levelStyles: Record<
   MatchLevel,
@@ -49,14 +40,6 @@ const levelStyles: Record<
   strong: { variant: 'success', label: 'Strong fit' },
   moderate: { variant: 'warning', label: 'Moderate fit' },
   weak: { variant: 'destructive', label: 'Weak fit' },
-}
-
-function deriveExperienceLevel(title: string): string {
-  const t = title.toLowerCase()
-  if (/staff|principal|lead/.test(t)) return 'Staff'
-  if (/senior/.test(t)) return 'Senior'
-  if (/junior|entry|graduate/.test(t)) return 'Junior'
-  return 'Mid'
 }
 
 function ScoreFor(job: Job, match?: JobMatch): number | undefined {
@@ -117,9 +100,7 @@ function JobColumnHeader({
   return (
     <div className="flex h-full flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-2">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-blue-600 font-display text-xs font-bold text-white shadow-sm">
-          {job.company.slice(0, 1).toUpperCase()}
-        </span>
+        <CompanyLogo company={job.company} size="md" />
         <button
           type="button"
           onClick={onRemove}
@@ -189,7 +170,9 @@ export default function ComparePage() {
     return map
   }, [])
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  // Selection is shared with the Jobs page (and survives reloads) through the
+  // compare store — picking roles while browsing carries over here.
+  const { ids: selectedIds, setIds } = useCompareSelection()
   const [picker, setPicker] = useState('')
   const resultsRef = useRef<HTMLDivElement>(null)
 
@@ -201,11 +184,11 @@ export default function ComparePage() {
 
   const addJob = (id: string) => {
     if (!id || selectedIds.length >= 3 || selectedIds.includes(id)) return
-    setSelectedIds((prev) => [...prev, id])
+    setIds([...selectedIds, id])
     setPicker('')
   }
 
-  const removeJob = (id: string) => setSelectedIds((prev) => prev.filter((x) => x !== id))
+  const removeJob = (id: string) => setIds(selectedIds.filter((x) => x !== id))
 
   const ranked = useMemo(() => {
     return selectedJobs
@@ -228,7 +211,10 @@ export default function ComparePage() {
       : []
   const isTie = bestIds.length > 1
 
-  const maxSalaryMin = Math.max(...selectedJobs.map((job) => job.salaryRange.min), -1)
+  const maxSalaryMin = Math.max(
+    ...selectedJobs.map((job) => job.salaryRange?.min ?? -1),
+    -1,
+  )
 
   const gridColumns = `minmax(150px, 190px) repeat(${selectedJobs.length}, minmax(240px, 1fr))`
 
@@ -417,7 +403,7 @@ export default function ComparePage() {
                   </div>
                   {selectedJobs.map((job) => (
                     <div key={job.id} className="border-l border-border p-4 text-sm text-foreground">
-                      {typeLabels[job.type]}
+                      {formatJobType(job.type)}
                     </div>
                   ))}
                 </div>
@@ -428,7 +414,7 @@ export default function ComparePage() {
                   </div>
                   {selectedJobs.map((job) => (
                     <div key={job.id} className="border-l border-border p-4 text-sm text-foreground">
-                      {workModeLabels[job.workMode]}
+                      {formatWorkMode(job) ?? <NoData label="Not disclosed" />}
                     </div>
                   ))}
                 </div>
@@ -439,7 +425,7 @@ export default function ComparePage() {
                   </div>
                   {selectedJobs.map((job) => (
                     <div key={job.id} className="border-l border-border p-4 text-sm text-foreground">
-                      {deriveExperienceLevel(job.title)}
+                      {deriveExperienceLevel(job)}
                     </div>
                   ))}
                 </div>
@@ -449,7 +435,9 @@ export default function ComparePage() {
                     Salary
                   </div>
                   {selectedJobs.map((job) => {
-                    const isTop = job.salaryRange.min === maxSalaryMin
+                    const salary = job.salaryRange
+                    const isTop =
+                      salary !== undefined && maxSalaryMin >= 0 && salary.min === maxSalaryMin
                     return (
                       <div
                         key={job.id}
@@ -457,13 +445,17 @@ export default function ComparePage() {
                           isTop ? 'bg-brand-50/50 dark:bg-brand-950/20' : ''
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 font-semibold text-foreground">
-                            <Banknote className="size-3.5 text-muted-foreground" aria-hidden />
-                            {formatSalaryRange(job.salaryRange.min, job.salaryRange.max)}
-                          </span>
-                          {isTop && <Badge variant="primary" className="text-[10px]">Top</Badge>}
-                        </div>
+                        {salary ? (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 font-semibold text-foreground">
+                              <Banknote className="size-3.5 text-muted-foreground" aria-hidden />
+                              {formatSalaryRange(salary.min, salary.max, salary.currency)}
+                            </span>
+                            {isTop && <Badge variant="primary" className="text-[10px]">Top</Badge>}
+                          </div>
+                        ) : (
+                          <NoData label="Not disclosed" />
+                        )}
                       </div>
                     )
                   })}

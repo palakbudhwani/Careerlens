@@ -3,7 +3,6 @@ import { careerRecommendations } from '@/data/career-recommendations'
 import { history } from '@/data/history'
 import { jobs } from '@/data/jobs'
 import { matches } from '@/data/matches'
-import { resume } from '@/data/resume'
 import { skillGaps } from '@/data/skill-gaps'
 import type {
   Candidate,
@@ -11,7 +10,6 @@ import type {
   HistoryEntry,
   Job,
   JobMatch,
-  Resume,
   SkillGap,
 } from '@/types'
 
@@ -36,10 +34,6 @@ export const mockStore = {
       }
     }
     return candidate
-  },
-
-  getResume(): Resume {
-    return resume
   },
 
   getJobs(): Job[] {

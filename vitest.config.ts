@@ -1,0 +1,18 @@
+import { fileURLToPath, URL } from 'node:url'
+
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.test.{ts,tsx}'],
+    // Backend tests are plain node:test suites under backend/tests and run
+    // separately via `npm --prefix backend test`.
+  },
+})

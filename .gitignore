@@ -7,18 +7,45 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies & generated output
 node_modules
 dist
 dist-ssr
+.vite
+coverage
+*.tsbuildinfo
 *.local
+
+# Environment secrets (never ship these in a ZIP or a commit)
+.env
+.env.*
+!.env.example
+backend/.env
+
+# Key material and credentials
+*.pem
+*.key
+*.pfx
+*.p12
+credentials.json
+
+# Private/personal resumes: only the synthetic test fixtures are shareable
+Resume/*
+!Resume/CareerLens_Test_Resume_*.pdf
+
+# Packaged archives produced by `npm run package:zip`
+*.zip
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.claude/
+research/

@@ -36,6 +36,7 @@ const loadScript = (src: string): Promise<void> => {
 }
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ResultSourceNote } from '@/components/ui/result-source'
 import { apiService } from '@/lib/api-service'
 import type { 
   MockInterviewQuestion, 
@@ -406,18 +407,28 @@ export default function MockInterviewPage() {
   }
 
   // --- Resume Upload Handler ---
+  // Always parses the file the user just selected — never reuses a resume
+  // from an earlier upload or session. A sequence stamp ensures a slow parse
+  // of an older file can never overwrite the currently selected file's text.
+  const uploadSeqRef = useRef(0)
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    // Reset immediately so the same file can be selected again later.
+    e.target.value = ''
     if (!file) return
+    const seq = ++uploadSeqRef.current
     setParsing(true)
     setResumeName(file.name)
+    setResumeText('')
     try {
       const res = await apiService.parseResume(file)
+      if (uploadSeqRef.current !== seq) return
       setResumeText(res.resumeText)
     } catch (err) {
       console.error('Failed to parse resume:', err)
+      if (uploadSeqRef.current === seq) setResumeText('')
     } finally {
-      setParsing(false)
+      if (uploadSeqRef.current === seq) setParsing(false)
     }
   }
 
@@ -609,6 +620,9 @@ export default function MockInterviewPage() {
                     className="hidden"
                   />
                 </div>
+                {!resumeText && !parsing && (
+                  <p className="text-[11px] text-muted-foreground">Upload your resume to get started.</p>
+                )}
               </div>
             </div>
 
@@ -637,7 +651,7 @@ export default function MockInterviewPage() {
             <Button
               className="w-full py-2.5 rounded-xl font-semibold tracking-wide"
               onClick={handleStartInterview}
-              disabled={!candidateName.trim() || !resumeText.trim()}
+              disabled={!candidateName.trim() || !resumeText.trim() || parsing}
               leftIcon={<Play className="size-4" />}
             >
               Start Proctored Interview Session
@@ -877,12 +891,14 @@ export default function MockInterviewPage() {
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 dark:bg-emerald-950/20 p-4 text-xs space-y-2">
                     <div className="flex items-center justify-between border-b pb-2 border-emerald-200/50">
                       <span className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
-                        <CheckCircle2 className="size-4" /> AI Proctor Feedback
+                        <CheckCircle2 className="size-4" />{' '}
+                        {currentEvaluation.source?.startsWith('AI') ? 'AI Proctor Feedback' : 'Proctor Feedback'}
                       </span>
                       <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-sm">
                         {currentEvaluation.score} / 10
                       </span>
                     </div>
+                    <ResultSourceNote source={currentEvaluation.source} />
                     <p className="text-foreground leading-relaxed pt-1">{currentEvaluation.instantFeedback}</p>
                     
                     <div className="grid gap-2 grid-cols-3 pt-2 text-[10px] text-muted-foreground border-t border-emerald-200/40">
@@ -936,6 +952,7 @@ export default function MockInterviewPage() {
               <div className="inline-block px-3 py-1 bg-brand-50 text-brand-600 dark:bg-brand-950/30 dark:text-brand-400 rounded-full font-bold text-xs">
                 {scorecard.hiringRecommendation}
               </div>
+              <ResultSourceNote source={scorecard.source} className="justify-center" />
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
               

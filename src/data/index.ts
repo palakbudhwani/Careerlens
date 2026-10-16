@@ -1,5 +1,4 @@
 export { candidate, candidateSkills } from './candidate'
-export { resume } from './resume'
 export { skillCatalog, skillGroups, skillCategories, type SkillCatalog } from './skills'
 export { jobs, jobListings } from './jobs'
 export { matches, matchResults } from './matches'

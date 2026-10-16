@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PageHeader } from '@/components/ui/page-header'
 import { Textarea } from '@/components/ui/textarea'
-import { useStoredResume } from '@/lib/resume-store'
+import { clearStoredResume, useStoredResume } from '@/lib/resume-store'
 import { candidateFromStoredResume } from '@/lib/effective-candidate'
 
 export default function ProfilePage() {
@@ -80,6 +80,8 @@ export default function ProfilePage() {
   }
 
   const handleLogout = () => {
+    // The session resume and every result derived from it end with the session.
+    clearStoredResume()
     try {
       window.localStorage.removeItem('careerlens.user_name')
       window.localStorage.removeItem('careerlens.user_email')

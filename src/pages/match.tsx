@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
   Upload, 
@@ -19,10 +19,53 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { apiService } from '@/lib/api-service'
-import type { MatchAnalysisResponse, InterviewQuestion, AnswerEvaluationResponse } from '@/lib/api-service'
+import { ResultSourceNote } from '@/components/ui/result-source'
+import { apiService, ApiHttpError, BackendConnectionError } from '@/lib/api-service'
+import { API_ORIGIN_LABEL } from '@/lib/api-config'
+import type { MatchAnalysisResponse, InterviewQuestion, AnswerEvaluationResponse, ResumeParseResponse } from '@/lib/api-service'
+import { buildJobMatchDescription } from '@/lib/job-utils'
 import { mockStore } from '@/lib/mock-store'
-import { useStoredResume, writeStoredResume } from '@/lib/resume-store'
+import { useStoredResume, writeStoredResume, clearStoredResume } from '@/lib/resume-store'
+import { createRunGuard } from '@/lib/run-guard'
+
+const ANALYSIS_DEBOUNCE_MS = 600
+
+function countWords(str: string): number {
+  return str.trim().split(/\s+/).filter(Boolean).length
+}
+
+function isNetworkError(error: unknown): boolean {
+  if (error instanceof BackendConnectionError) return true
+  if (error instanceof TypeError) return true
+  const message = error instanceof Error ? error.message : ''
+  return /failed to fetch|networkerror|network request failed|load failed|ERR_CONNECTION/i.test(message)
+}
+
+// Three distinct failure classes reach the UI:
+//   1. backend unreachable  -> start-it-yourself instructions
+//   2. AI provider outage   -> provider wording (never mistaken for a dead API)
+//   3. application error    -> the backend's own message
+function describeError(error: unknown, what: string): string {
+  const message = error instanceof Error && error.message ? error.message : ''
+  if (isNetworkError(error)) {
+    return `Could not reach the CareerLens backend at ${API_ORIGIN_LABEL} while ${what}. Start it with \`npm run dev\` and try again.`
+  }
+  if (error instanceof ApiHttpError && error.isAiProviderError) {
+    return `The AI provider could not complete the request while ${what}: ${message} Try again shortly.`
+  }
+  if (message) return `Failed to ${what}: ${message}`
+  return `Failed to ${what}. Please try again.`
+}
+
+// Question-generation failures are scoped to the questions card, never the
+// global banner: a retryable, human message that never leaks raw provider
+// text (429s, upstream HTML, schema noise) into the UI.
+function describeQuestionError(error: unknown): string {
+  if (isNetworkError(error)) {
+    return `Could not reach the CareerLens backend at ${API_ORIGIN_LABEL}. Start it with \`npm run dev\` and try again.`
+  }
+  return 'We could not generate interview questions for this resume and role right now. Please try again.'
+}
 
 export type InterviewDifficulty = 'Junior' | 'Mid' | 'Senior' | 'Lead'
 
@@ -53,6 +96,7 @@ export default function MatchPage() {
   const [resumeName, setResumeName] = useState('')
   const [resumeQuestions, setResumeQuestions] = useState<InterviewQuestion[]>([])
   const [roleQuestions, setRoleQuestions] = useState<InterviewQuestion[]>([])
+  const [questionsSource, setQuestionsSource] = useState<string | undefined>(undefined)
   const [questionTab, setQuestionTab] = useState<'resume' | 'role'>('resume')
   const [selectedQuestion, setSelectedQuestion] = useState<InterviewQuestion | null>(null)
   const [answer, setAnswer] = useState('')
@@ -64,6 +108,16 @@ export default function MatchPage() {
   const [generating, setGenerating] = useState(false)
   const [evaluating, setEvaluating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [questionError, setQuestionError] = useState<string | null>(null)
+
+  // Request coordinators: each run is keyed on its exact inputs and stamped
+  // with a sequence number so stale/superseded responses are discarded and
+  // identical in-flight/completed requests are never duplicated. Both guards
+  // are invalidated when a new file is uploaded so late responses for the
+  // previous resume can never overwrite results for the new one.
+  const analysisGuardRef = useRef(createRunGuard())
+  const questionsGuardRef = useRef(createRunGuard())
+  const jobContextRef = useRef({ jobDesc: '', jobId: 'custom-job', difficulty: 'Mid' })
 
   // Pre-fill job ID if passed in route parameters
   useEffect(() => {
@@ -86,35 +140,163 @@ export default function MatchPage() {
       return customJobDescription
     }
     if (!activeJob) return ''
-    return `${activeJob.title} at ${activeJob.company}\n\nJob Description:\n${activeJob.description}\n\nRequirements:\n${activeJob.requirements.join('\n')}\n\nPreferred:\n${activeJob.preferred.join('\n')}`
+    return buildJobMatchDescription(activeJob)
   }, [useCustomJob, customJobDescription, activeJob])
 
   const isResumeFake = storedResume?.parsedDetails?.isAuthentic === false || analysis?.isAuthentic === false
   const validationErrors = analysis?.validationErrors || storedResume?.parsedDetails?.validationErrors || []
 
-  // Upload PDF, Parse & Perform ATS Match
+  // Fresh job context for callbacks (avoids stale closures mid-flight)
+  jobContextRef.current = {
+    jobDesc: activeJobDescription,
+    jobId: activeJob?.id || 'custom-job',
+    difficulty
+  }
+
+  // Monotonic stamp for answer evaluations. Every submit takes the next value;
+  // any context change (new question, new questions set) bumps it too, so a
+  // late evaluation response can never overwrite the evaluation shown for the
+  // currently selected question.
+  const evaluationSeqRef = useRef(0)
+  const clearEvaluation = () => {
+    evaluationSeqRef.current += 1
+    setEvaluation(null)
+    // Any in-flight evaluation is now stale; release the submit button so the
+    // user can evaluate the newly selected question immediately.
+    setEvaluating(false)
+  }
+
+  // Runs the ATS match analysis for an exact (resume, job description) pair.
+  // The key dedupes identical requests; the seq discards superseded responses.
+  const runAnalysis = useCallback(async (text: string, jobDesc: string, opts: { force?: boolean } = {}) => {
+    const guard = analysisGuardRef.current
+    const seq = guard.begin(JSON.stringify([text, jobDesc]), opts)
+    if (seq === null) return
+    setLoading(true)
+    setError(null)
+    setAnalysis(null)
+    try {
+      const result = await apiService.analyzeMatch(
+        text,
+        jobDesc,
+        'candidate-001',
+        jobContextRef.current.jobId
+      )
+      if (!guard.isCurrent(seq)) return
+      guard.markCompleted(seq)
+      setAnalysis(result)
+    } catch (err) {
+      if (!guard.isCurrent(seq)) return
+      setError(describeError(err, 'run the match analysis'))
+    } finally {
+      if (guard.end(seq)) setLoading(false)
+    }
+  }, [])
+
+  // Generates interview questions for an exact (resume, job, difficulty) triple
+  const generateRealQuestions = useCallback(async (
+    text: string,
+    jobDesc: string,
+    diff: string,
+    opts: { force?: boolean; preserveCurrent?: boolean; fileName?: string } = {}
+  ) => {
+    const guard = questionsGuardRef.current
+    const seq = guard.begin(JSON.stringify([text, jobDesc, diff]), opts)
+    if (seq === null) return
+    setGenerating(true)
+    setQuestionError(null)
+    if (!opts.preserveCurrent) {
+      clearEvaluation()
+      setAnswer('')
+    }
+    try {
+      const result = await apiService.generateQuestions(text, jobDesc, diff, 5)
+      if (!guard.isCurrent(seq)) return
+      guard.markCompleted(seq)
+      const resumeQs = result.resumeBasedQuestions || []
+      const roleQs = result.roleBasedQuestions || []
+      setResumeQuestions(resumeQs)
+      setRoleQuestions(roleQs)
+      setQuestionsSource(result.source)
+      setSelectedQuestion(resumeQs[0] || roleQs[0] || null)
+      setQuestionTab('resume')
+      clearEvaluation()
+      setAnswer('')
+      const fileName = opts.fileName
+      if (fileName) {
+        const totalQuestionsCount = resumeQs.length + roleQs.length
+        setHistory(prev =>
+          prev.map(item =>
+            item.resume_name === fileName
+              ? { ...item, question_count: totalQuestionsCount }
+              : item
+          )
+        )
+      }
+    } catch (err) {
+      if (!guard.isCurrent(seq)) return
+      // A failed generation must not leave the previous job's questions on
+      // screen (unless the user is deliberately regenerating), and must not
+      // raise the global banner — the card shows its own retryable note.
+      if (!opts.preserveCurrent) {
+        setResumeQuestions([])
+        setRoleQuestions([])
+        setQuestionsSource(undefined)
+        setSelectedQuestion(null)
+        setQuestionTab('resume')
+        clearEvaluation()
+        setAnswer('')
+      }
+      setQuestionError(describeQuestionError(err))
+    } finally {
+      if (guard.end(seq)) setGenerating(false)
+    }
+  }, [])
+
+  // Upload PDF once, then run analysis + questions against the active job
   const processUploadedResume = async (file: File) => {
     if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
       setError('Please upload a valid PDF resume.')
       return
     }
 
-    if (useCustomJob && customJobDescription.trim().split(/\s+/).filter(Boolean).length < 50) {
+    if (useCustomJob && countWords(customJobDescription) < 50) {
       setError('The custom job description must be at least 50 words long to perform accurate ATS matching.')
       return
     }
 
+    // A new upload supersedes everything derived from the previous resume.
+    // Invalidate in-flight/queued runs FIRST so any late response for the old
+    // file is discarded, then clear the stored resume and all of its results
+    // before the new analysis starts.
+    analysisGuardRef.current.invalidate()
+    questionsGuardRef.current.invalidate()
+    clearStoredResume()
+    setResumeText('')
+    setResumeName('')
     setLoading(true)
     setError(null)
-    setEvaluation(null)
+    clearEvaluation()
+    setAnswer('')
     setAnalysis(null)
     setResumeQuestions([])
     setRoleQuestions([])
+    setQuestionsSource(undefined)
     setSelectedQuestion(null)
+    setQuestionTab('resume')
+    setQuestionError(null)
+    setHistory([])
 
     try {
-      // 1. Call Resume Parser Endpoint
-      const parseResult = await apiService.parseResume(file)
+      // 1. Parse the PDF (re-parsing happens only here, never on job switches)
+      let parseResult: ResumeParseResponse
+      try {
+        parseResult = await apiService.parseResume(file)
+      } catch (err) {
+        setError(describeError(err, 'parse the resume PDF'))
+        return
+      }
+
       const extractedText = parseResult.resumeText
       setResumeText(extractedText)
       setResumeName(file.name)
@@ -128,20 +310,9 @@ export default function MatchPage() {
         resumeText: extractedText
       })
 
-      // 2. Call ATS Match Analysis Endpoint
-      const analysisResult = await apiService.analyzeMatch(
-        extractedText,
-        activeJobDescription,
-        'candidate-001',
-        activeJob?.id || 'custom-job'
-      )
-      setAnalysis(analysisResult)
-
-      // Add to session history
-      const sessionId = Date.now()
       setHistory(prev => [
         {
-          id: sessionId,
+          id: Date.now(),
           resume_name: file.name,
           question_count: 0,
           answer_count: 0
@@ -149,96 +320,85 @@ export default function MatchPage() {
         ...prev
       ])
 
-      // 3. Generate tailored interview questions
-      await generateRealQuestions(extractedText, activeJobDescription, difficulty)
-
-    } catch (err: any) {
-      setError(err.message || 'Failed to complete resume analysis. Make sure the backend server is running.')
+      // 2. ATS match analysis and interview questions are independent requests
+      // against the same inputs: run them together so the page is not gated on
+      // the sum of two sequential LLM round trips.
+      const ctx = jobContextRef.current
+      await Promise.all([
+        runAnalysis(extractedText, ctx.jobDesc, { force: true }),
+        generateRealQuestions(extractedText, ctx.jobDesc, ctx.difficulty, {
+          force: true,
+          fileName: file.name
+        })
+      ])
+    } catch (err) {
+      setError(describeError(err, 'analyze the uploaded resume'))
     } finally {
-      setLoading(false)
+      if (!analysisGuardRef.current.isInFlight()) setLoading(false)
       if (fileRef.current) fileRef.current.value = ''
     }
   }
 
-  // Auto-run analysis when storedResume loads or when selected job targets change
+  // Keep local resume fields in sync with the shared session store. When the
+  // store is empty (fresh session or mid-upload) the local fields are cleared
+  // too, so no previously extracted text lingers.
   useEffect(() => {
-    if (storedResume && storedResume.resumeText && activeJobDescription) {
-      const isNewResume = storedResume.resumeText !== resumeText
-      const noAnalysisYet = !analysis
-      
-      if (isNewResume || noAnalysisYet) {
-        setResumeText(storedResume.resumeText)
-        setResumeName(storedResume.fileName)
-        
-        const runSavedMatch = async () => {
-          setLoading(true)
-          setError(null)
-          setAnalysis(null)
-          setResumeQuestions([])
-          setRoleQuestions([])
-          setSelectedQuestion(null)
-          try {
-            const analysisResult = await apiService.analyzeMatch(
-              storedResume.resumeText,
-              activeJobDescription,
-              'candidate-001',
-              activeJob?.id || 'custom-job'
-            )
-            setAnalysis(analysisResult)
-            await generateRealQuestions(storedResume.resumeText, activeJobDescription, difficulty)
-          } catch (err: any) {
-            setError(err.message || 'Failed to complete resume analysis.')
-          } finally {
-            setLoading(false)
-          }
-        }
-        runSavedMatch()
-      }
+    if (!storedResume) {
+      setResumeName('')
+      setResumeText('')
+      return
     }
-  }, [storedResume, selectedJobId, useCustomJob])
+    setResumeName(storedResume.fileName)
+    setResumeText(storedResume.resumeText)
+  }, [storedResume])
 
-  // Generates real interview questions based on parsed user data and selected difficulty
-  const generateRealQuestions = async (text: string, jobDesc: string, diff: string) => {
-    setGenerating(true)
-    setEvaluation(null)
-    setAnswer('')
-    
-    try {
-      const result = await apiService.generateQuestions(text, jobDesc, diff, 5)
-      setResumeQuestions(result.resumeBasedQuestions || [])
-      setRoleQuestions(result.roleBasedQuestions || [])
-      
-      const defaultQ = (result.resumeBasedQuestions && result.resumeBasedQuestions[0]) || 
-                       (result.roleBasedQuestions && result.roleBasedQuestions[0]) || null;
-      setSelectedQuestion(defaultQ)
-      setQuestionTab('resume')
+  // Auto-run analysis when the stored resume, target job, or difficulty change.
+  // Requests are keyed on their exact inputs, so e.g. a difficulty change never
+  // re-triggers the (difficulty-independent) match analysis. A short custom job
+  // description is rejected locally instead of sending a request that would 422.
+  useEffect(() => {
+    if (!storedResume?.resumeText) return
+    const text = storedResume.resumeText
+    const jobDesc = activeJobDescription
 
-      // Update history count
-      const totalQuestionsCount = (result.resumeBasedQuestions?.length || 0) + (result.roleBasedQuestions?.length || 0)
-      setHistory(prev =>
-        prev.map(item =>
-          item.resume_name === resumeName
-            ? { ...item, question_count: totalQuestionsCount }
-            : item
-        )
-      )
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate tailored interview questions.')
-    } finally {
-      setGenerating(false)
+    if (!jobDesc.trim()) {
+      setError(prev => (prev && prev.includes('custom job description must be at least 50 words') ? null : prev))
+      return
     }
-  }
+    if (useCustomJob && countWords(jobDesc) < 50) {
+      setError('The custom job description must be at least 50 words long to perform accurate ATS matching.')
+      return
+    }
+
+    const timer = setTimeout(() => {
+      // Analysis and question generation are independent requests: fire them
+      // together instead of waiting for one to finish before starting the
+      // other (each swallows its own errors, so neither can reject the chain).
+      void Promise.all([
+        runAnalysis(text, jobDesc),
+        generateRealQuestions(text, jobDesc, difficulty, { fileName: storedResume.fileName })
+      ])
+    }, ANALYSIS_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [storedResume, activeJobDescription, difficulty, useCustomJob, runAnalysis, generateRealQuestions])
 
   // Triggers question regeneration on difficulty or job description shifts
   const triggerRegenerateQuestions = async (newDiff: string) => {
-    if (!resumeText) return
+    const text = storedResume?.resumeText || resumeText
+    if (!text) return
+    const ctx = jobContextRef.current
     setDifficulty(newDiff)
-    await generateRealQuestions(resumeText, activeJobDescription, newDiff)
+    await generateRealQuestions(text, ctx.jobDesc, newDiff, {
+      force: true,
+      preserveCurrent: true,
+      fileName: resumeName || storedResume?.fileName
+    })
   }
 
   // Submit Answer to LLM Evaluator
   const evaluateAnswer = async () => {
     if (!selectedQuestion || !answer.trim()) return
+    const seq = ++evaluationSeqRef.current
     setEvaluating(true)
     setError(null)
 
@@ -247,6 +407,9 @@ export default function MatchPage() {
         selectedQuestion.question,
         answer
       )
+      // Discard a late response that belongs to a previously selected question
+      // or a superseded submission.
+      if (evaluationSeqRef.current !== seq) return
       setEvaluation(evalResult)
 
       const markAnswered = (list: InterviewQuestion[]) => 
@@ -264,9 +427,12 @@ export default function MatchPage() {
         )
       )
     } catch (err: any) {
-      setError(err.message || 'Failed to evaluate answer.')
+      if (evaluationSeqRef.current !== seq) return
+      setError(describeError(err, 'evaluate your answer'))
     } finally {
-      setEvaluating(false)
+      // Only the latest submission clears the spinner, so an older response
+      // finishing out of order cannot re-enable the button mid-evaluation.
+      if (evaluationSeqRef.current === seq) setEvaluating(false)
     }
   }
 
@@ -313,7 +479,10 @@ export default function MatchPage() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+        <div
+          data-testid="page-error"
+          className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive"
+        >
           <AlertCircle className="size-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -327,7 +496,7 @@ export default function MatchPage() {
             1. Select Target Job Posting
           </CardTitle>
           <CardDescription>
-            Choose a mock job listing from the platform or input a custom job description to analyze your resume against.
+            Choose a job listing curated by the platform or input a custom job description to analyze your resume against.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -475,6 +644,7 @@ export default function MatchPage() {
                 <div className="space-y-2 border-t pt-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Analysis Summary</p>
                   <p className="text-xs leading-relaxed text-muted-foreground bg-muted/20 p-3.5 rounded-xl border">{analysis.summary}</p>
+                  <ResultSourceNote source={analysis.source} />
                 </div>
 
                 {/* Identified Gaps list */}
@@ -548,7 +718,7 @@ export default function MatchPage() {
                 <FileText className="mb-2 size-10 text-muted-foreground/60" />
                 <p className="text-sm font-semibold text-foreground">No Resume Analyzed Yet</p>
                 <p className="mt-1 text-xs text-muted-foreground max-w-sm">
-                  Upload your PDF resume to parse real skills, leadership, and project details for an instant ATS score.
+                  Upload your resume to get started. We'll parse your PDF, compute a real ATS score, and generate tailored interview questions.
                 </p>
                 <Button
                   className="mt-4"
@@ -676,7 +846,6 @@ export default function MatchPage() {
               onChange={(e) => {
                 const diff = e.target.value
                 setDifficulty(diff)
-                if (resumeText) triggerRegenerateQuestions(diff)
               }}
               disabled={!analysis || generating}
               className="rounded-lg border bg-background px-3 py-1.5 text-xs font-medium text-foreground outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
@@ -698,12 +867,35 @@ export default function MatchPage() {
           </div>
         </CardHeader>
         <CardContent className="pt-6">
+          {questionError && (
+            <div
+              data-testid="question-error"
+              className="mb-4 flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50/70 p-4 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-200 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="size-4 shrink-0" aria-hidden />
+                <span>{questionError}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                data-testid="question-error-retry"
+                onClick={() => triggerRegenerateQuestions(difficulty)}
+                disabled={generating || !resumeText}
+              >
+                {generating ? 'Retrying...' : 'Retry'}
+              </Button>
+            </div>
+          )}
+          {(resumeQuestions.length > 0 || roleQuestions.length > 0) && (
+            <ResultSourceNote source={questionsSource} className="mb-4" />
+          )}
           {(resumeQuestions.length > 0 || roleQuestions.length > 0) && (
             <div className="mb-5 flex border-b border-border">
               <button
                 onClick={() => {
                   setQuestionTab('resume')
-                  setEvaluation(null)
+                  clearEvaluation()
                   setAnswer('')
                   setSelectedQuestion(resumeQuestions[0] || null)
                 }}
@@ -718,7 +910,7 @@ export default function MatchPage() {
               <button
                 onClick={() => {
                   setQuestionTab('role')
-                  setEvaluation(null)
+                  clearEvaluation()
                   setAnswer('')
                   setSelectedQuestion(roleQuestions[0] || null)
                 }}
@@ -744,7 +936,7 @@ export default function MatchPage() {
                       key={q.id}
                       onClick={() => {
                         setSelectedQuestion(q)
-                        setEvaluation(null)
+                        clearEvaluation()
                         setAnswer('')
                       }}
                       className={`w-full rounded-xl border p-3.5 text-left text-xs leading-relaxed transition ${
@@ -816,9 +1008,12 @@ export default function MatchPage() {
                     {evaluation && (
                       <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50/60 dark:bg-emerald-950/20 p-4 text-xs">
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-emerald-800 dark:text-emerald-300">AI Evaluation Feedback</span>
+                          <span className="font-semibold text-emerald-800 dark:text-emerald-300">
+                            {evaluation.source?.startsWith('AI') ? 'AI Evaluation Feedback' : 'Evaluation Feedback'}
+                          </span>
                           <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">{evaluation.score}/100</span>
                         </div>
+                        <ResultSourceNote source={evaluation.source} />
                         <p className="text-foreground leading-relaxed">{evaluation.feedback}</p>
                         {evaluation.suggested_improvement && (
                           <p className="pt-2 border-t border-emerald-200/60 text-emerald-800 dark:text-emerald-300">
@@ -836,8 +1031,12 @@ export default function MatchPage() {
                 )}
               </div>
             </div>
+          ) : generating ? (
+            <div data-testid="questions-empty" className="py-8 text-center text-xs text-muted-foreground">
+              Generating tailored interview questions...
+            </div>
           ) : (
-            <div className="py-8 text-center text-xs text-muted-foreground">
+            <div data-testid="questions-empty" className="py-8 text-center text-xs text-muted-foreground">
               Upload a resume PDF above to automatically generate interview questions tailored to your experience.
             </div>
           )}

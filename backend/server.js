@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import dotenv from 'dotenv';
-import pdf from 'pdf-parse';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { extractResumeText } from './pdfExtract.js';
 import { parseResume, analyzeMatch, generateQuestions, evaluateAnswer } from './llm.js';
 import { analyzeSkillGaps, generateCareerGrowthPlan } from './skillGapLlm.js';
+import { getAiProvider, getFallbackProvider, isAiEnabled } from './aiProvider.js';
 import { 
   createSession, 
   getSession, 
@@ -18,27 +20,46 @@ import {
   generateFinalScorecard 
 } from './mockInterviewLlm.js';
 
-dotenv.config();
+import './loadEnv.js';
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = Number.parseInt(process.env.PORT || '', 10) || 5000;
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Enable CORS for local development ports
+// Enable CORS for local development origins plus anything explicitly
+// allow-listed through CORS_ORIGINS (comma separated) in backend/.env.
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
-  'http://127.0.0.1:3000'
+  'http://127.0.0.1:3000',
+  ...String(process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
 ];
+
+// In development any localhost/127.0.0.1 port is accepted so a shifted Vite
+// port (5174, 5175, …) can never break the app. Production only ever honours
+// the explicit allow-list above — connection problems are never "solved" by
+// opening the API to arbitrary origins.
+function isLocalOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    return (url.protocol === 'http:' || url.protocol === 'https:') &&
+      (url.hostname === 'localhost' || url.hostname === '127.0.0.1');
+  } catch {
+    return false;
+  }
+}
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+    // Allow requests with no origin (like curl, Postman, or server-to-server)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+    if (!isProduction && isLocalOrigin(origin)) return callback(null, true);
+    const msg = `CORS blocked origin ${origin}. Add it to CORS_ORIGINS in backend/.env (production) or use a localhost URL (development).`;
     return callback(new Error(msg), false);
   },
   credentials: true
@@ -74,10 +95,41 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+// Per-request duration. The AI routes are the slow ones (LLM round trips plus
+// OCR), so this makes "which endpoint is slow" answerable from the console
+// without any extra tooling. Health probes are polled by the frontend while a
+// request is in flight, so they are excluded to keep the log readable.
+const TIMING_EXCLUDED_PATHS = new Set(['/health', '/api/v1/health']);
+app.use((req, res, next) => {
+  if (TIMING_EXCLUDED_PATHS.has(req.path)) return next();
+  const start = process.hrtime.bigint();
+  res.on('finish', () => {
+    const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
+    console.log(`[timing] ${req.method} ${req.path} status=${res.statusCode} in ${Math.round(durationMs)}ms`);
+  });
+  next();
 });
+
+// Health check endpoint.
+// Deliberately dependency-free: no Gemini/Groq call, no file read, no state.
+// The frontend polls this before/while a request fails so "backend still
+// starting" is distinguishable from an application error.
+function healthHandler(req, res) {
+  res.status(200).json({
+    status: 'ok',
+    service: 'careerlens-backend',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.round(process.uptime()),
+    ai: {
+      primary: getAiProvider(),
+      fallback: getFallbackProvider(),
+      enabled: isAiEnabled()
+    }
+  });
+}
+
+app.get('/health', healthHandler);
+app.get('/api/v1/health', healthHandler);
 
 /**
  * Endpoint 1: Match Analysis & ATS Scoring
@@ -183,7 +235,10 @@ app.post('/api/v1/interview/questions', async (req, res, next) => {
       });
     }
 
-    const count = questionCount ? parseInt(questionCount, 10) : 5;
+    // Honor the requested total question count (frontend sends 5); clamp to a
+    // sane range so oversized requests cannot inflate token usage.
+    const requestedCount = parseInt(questionCount, 10);
+    const count = Number.isFinite(requestedCount) ? Math.min(10, Math.max(2, requestedCount)) : 5;
     const diff = difficulty || 'Mid';
 
     console.log(`Generating ${count} ${diff} questions...`);
@@ -210,26 +265,18 @@ app.post('/api/v1/resume/parse', upload.single('file'), async (req, res, next) =
 
     console.log(`Parsing PDF file: ${req.file.originalname} (${req.file.size} bytes)...`);
 
-    // Parse PDF buffer to text
-    let resumeText = '';
-    try {
-      const parsedPdf = await pdf(req.file.buffer);
-      resumeText = parsedPdf.text;
-    } catch (pdfError) {
-      console.warn('PDF parsing library failed, attempting fallback binary stream extraction...', pdfError.message);
-      try {
-        resumeText = extractTextFromCorruptedPdf(req.file.buffer);
-      } catch (fallbackError) {
-        console.error('Fallback PDF extraction also failed:', fallbackError);
-      }
-
-      if (!resumeText || resumeText.trim().length < 10) {
-        return res.status(422).json({
-          error: 'Unprocessable Entity',
-          message: 'Failed to extract text from the PDF file. The file may be corrupt or encrypted.'
-        });
-      }
+    // Text extraction: pdf-parse first, embedded-image OCR fallback for
+    // scanned pages, with bounded timeouts and typed errors (encrypted /
+    // corrupt / timeout / no readable text).
+    const extracted = await extractResumeText(req.file.buffer);
+    if (extracted.error) {
+      return res.status(422).json({
+        error: 'Unprocessable Entity',
+        message: extracted.error.message
+      });
     }
+
+    const resumeText = extracted.text;
     const wordCount = countWords(resumeText);
 
     if (wordCount < 10) {
@@ -239,7 +286,7 @@ app.post('/api/v1/resume/parse', upload.single('file'), async (req, res, next) =
       });
     }
 
-    console.log(`Successfully extracted ${wordCount} words from PDF. Querying LLM for details...`);
+    console.log(`Successfully extracted ${wordCount} words from PDF (${extracted.method}). Extracting structured details from the resume text (deterministic, no AI request)...`);
     const parsedDetails = await parseResume(resumeText);
 
     return res.status(200).json({
@@ -377,7 +424,8 @@ app.get('/api/v1/mock-interview/questions', async (req, res, next) => {
     return res.status(200).json({
       roundId: rId,
       roundName,
-      questions: safeQuestionsList
+      questions: safeQuestionsList,
+      source: session.roundQuestions?.source
     });
   } catch (error) {
     next(error);
@@ -441,7 +489,9 @@ app.post('/api/v1/mock-interview/submit-answer', async (req, res, next) => {
           technicalAccuracy: isCorrect ? 10.0 : 0.0,
           clarity: 10.0,
           relevanceToRole: 10.0
-        }
+        },
+        // MCQ grading is a fixed deterministic comparison — never AI.
+        source: 'Rule-based'
       };
     } else if (rId === 2 || rId === 3) {
       const questionsList = rId === 2 ? session.roundQuestions.round2 : session.roundQuestions.round3;
@@ -469,7 +519,8 @@ app.post('/api/v1/mock-interview/submit-answer', async (req, res, next) => {
       questionId,
       score: savedAnswer.score,
       instantFeedback: savedAnswer.feedback,
-      evaluatedCriteria: savedAnswer.evaluatedCriteria
+      evaluatedCriteria: savedAnswer.evaluatedCriteria,
+      source: savedAnswer.source
     });
   } catch (error) {
     next(error);
@@ -575,7 +626,8 @@ app.post('/api/v1/mock-interview/complete', async (req, res, next) => {
       roundBreakdown,
       strengths: session.status === 'TERMINATED' ? [] : scorecard.strengths,
       improvementAreas: scorecard.improvementAreas,
-      hiringRecommendation: scorecard.hiringRecommendation
+      hiringRecommendation: scorecard.hiringRecommendation,
+      source: scorecard.source
     });
   } catch (error) {
     next(error);
@@ -640,27 +692,12 @@ app.post('/api/v1/career-growth/plan', async (req, res, next) => {
   }
 });
 
-function extractTextFromCorruptedPdf(buffer) {
-  const content = buffer.toString('binary');
-  const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
-  let match;
-  let text = '';
-
-  while ((match = streamRegex.exec(content)) !== null) {
-    const streamData = match[1];
-    const textRegex = /\(([^)]+)\)\s*(?:Tj|TJ)/g;
-    let textMatch;
-    while ((textMatch = textRegex.exec(streamData)) !== null) {
-      text += textMatch[1] + ' ';
-    }
-  }
-
-  return text.trim();
-}
-
 // Central error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
+  const isExposedAiError = err.expose && Number.isInteger(err.statusCode);
+  if (!isExposedAiError) {
+    console.error('Server error:', err);
+  }
   
   // Handled Multer errors
   if (err instanceof multer.MulterError) {
@@ -677,13 +714,51 @@ app.use((err, req, res, next) => {
     });
   }
 
+  // AI provider errors that are safe to surface with their intended status
+  if (err.expose && Number.isInteger(err.statusCode)) {
+    console.error(`Handled AI provider error [${err.code || 'AI_ERROR'}]:`, err.message);
+    return res.status(err.statusCode).json({
+      error: err.code || 'AI_ERROR',
+      message: err.message,
+      code: err.code || 'AI_ERROR'
+    });
+  }
+
   return res.status(500).json({
     error: 'Internal Server Error',
     message: err.message || 'An unexpected error occurred on the server.'
   });
 });
 
-app.listen(port, () => {
-  console.log(`CareerLens backend server running at http://localhost:${port}`);
-  console.log(`CORS enabled for origins: ${allowedOrigins.join(', ')}`);
-});
+// Listen only when this file is the process entry point (npm start /
+// npm run dev). Tests import `app` and drive it over an ephemeral port, so
+// importing server.js never binds the default port.
+const isMainModule = process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+if (isMainModule) {
+  const server = app.listen(port, () => {
+    console.log(`CareerLens backend server running at http://localhost:${port}`);
+    console.log(`Health check: http://localhost:${port}/api/v1/health`);
+    console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}${isProduction ? '' : ' (plus any localhost origin)'}`);
+  });
+
+  // Startup failures are reported, never "fixed" by killing other processes.
+  server.on('error', (error) => {
+    console.error(`\n[careerlens] Backend failed to start on port ${port}: ${error.code || error.message}`);
+    if (error.code === 'EADDRINUSE') {
+      console.error('  Another program is already using this port.');
+      console.error(`  Windows:  netstat -ano | findstr :${port}`);
+      console.error(`  macOS/Linux: lsof -nP -iTCP:${port} -sTCP:LISTEN`);
+      console.error('  Stop that process, or start the backend on another port:');
+      console.error(`    PORT=${port + 1} npm run dev:api`);
+      console.error('  CareerLens will not terminate other processes for you.');
+    } else if (error.code === 'EACCES') {
+      console.error('  You do not have permission to bind this port. Pick a port above 1024 via PORT.');
+    } else {
+      console.error('  See the error above for details.');
+    }
+    process.exit(1);
+  });
+}
+
+export { app };

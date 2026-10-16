@@ -12,4 +12,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    // Deterministic dev URL: fail loudly instead of silently moving to
+    // another port when 5173 is already taken.
+    port: Number.parseInt(process.env.VITE_PORT || '', 10) || 5173,
+    strictPort: true,
+  },
+  preview: {
+    port: Number.parseInt(process.env.VITE_PORT || '', 10) || 5173,
+    strictPort: true,
+  },
 })

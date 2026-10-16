@@ -1,10 +1,14 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 
 import { ResumeUploadModal } from '@/components/resume/resume-upload-modal'
 import { ResumeCinematicAnalysis } from '@/components/resume/resume-cinematic-analysis'
+import {
+  ResumeUploadContext,
+  type ResumeUploadContextValue,
+} from '@/components/resume/resume-upload-context'
 import { writeStoredResume } from '@/lib/resume-store'
 import type { StoredResume } from '@/lib/resume-store'
 
@@ -12,12 +16,6 @@ interface CinematicState {
   fileName: string
   result: StoredResume | null
 }
-
-interface ResumeUploadContextValue {
-  openResumeUpload: () => void
-}
-
-const ResumeUploadContext = createContext<ResumeUploadContextValue | null>(null)
 
 /**
  * Global, app-wide resume upload experience.
@@ -97,12 +95,4 @@ export function ResumeUploadProvider({ children }: { children: ReactNode }) {
       </AnimatePresence>
     </ResumeUploadContext.Provider>
   )
-}
-
-export function useResumeUpload(): ResumeUploadContextValue {
-  const context = useContext(ResumeUploadContext)
-  if (!context) {
-    throw new Error('useResumeUpload must be used within a ResumeUploadProvider')
-  }
-  return context
 }

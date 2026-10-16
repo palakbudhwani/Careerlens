@@ -3,7 +3,7 @@ import { ArrowUpRight, Briefcase, Gauge, ScanSearch, Upload } from 'lucide-react
 import { Link } from 'react-router-dom'
 
 import { DashboardSectionHeader } from '@/components/dashboard/section-header'
-import { useResumeUpload } from '@/components/resume/resume-upload-provider'
+import { useResumeUpload } from '@/components/resume/resume-upload-context'
 import { cn } from '@/lib/utils'
 
 const actions: Array<{

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Gauge,
   Target,
@@ -18,9 +18,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { PageHeader } from '@/components/ui/page-header'
 import { Progress } from '@/components/ui/progress'
+import { ResultSourceNote } from '@/components/ui/result-source'
 import { Skeleton } from '@/components/ui/skeleton'
 import { apiService, type SkillGapAnalysisResponse, type SkillGapItem } from '@/lib/api-service'
 import { useStoredResume } from '@/lib/resume-store'
+import { createRunGuard } from '@/lib/run-guard'
 import { candidateFromStoredResume } from '@/lib/effective-candidate'
 
 const PRESET_ROLES = [
@@ -53,27 +55,53 @@ export default function SkillGapsPage() {
     }
   }, [candidate])
 
-  const runAnalysis = async (roleToAnalyze: string) => {
-    if (!storedResume?.resumeText) return
+  // Request coordinator: identical (resume, role) requests are deduplicated
+  // (StrictMode double-mounts and re-renders never re-fire a completed run)
+  // and stale/superseded responses are discarded (last-response-wins). The
+  // guard is invalidated whenever the session resume changes or is cleared, so
+  // a late response for a previous resume can never overwrite current results.
+  const runGuardRef = useRef(createRunGuard())
+
+  const runAnalysis = useCallback(async (roleToAnalyze: string, opts: { force?: boolean } = {}) => {
+    const resumeText = storedResume?.resumeText
+    if (!resumeText) return
+
+    const guard = runGuardRef.current
+    const seq = guard.begin(JSON.stringify([resumeText, roleToAnalyze]), opts)
+    if (seq === null) return
+
     setLoading(true)
     setError(null)
+    setAnalysis(null)
     try {
-      const resumeText = storedResume.resumeText
-      const parsedSkills = candidate?.topSkills?.map((s) => s.name) || storedResume.parsedDetails?.skills || []
+      const candidate = storedResume ? candidateFromStoredResume(storedResume) : null
+      const parsedSkills = candidate?.topSkills?.map((s) => s.name) || storedResume?.parsedDetails?.skills || []
 
       const result = await apiService.analyzeSkillGaps(resumeText, parsedSkills, roleToAnalyze)
+      if (!guard.isCurrent(seq)) return
+      guard.markCompleted(seq)
       setAnalysis(result)
     } catch (err: any) {
+      if (!guard.isCurrent(seq)) return
       console.error('Failed to analyze skill gaps:', err)
       setError(err.message || 'Failed to analyze skill gaps. Please check backend server status.')
     } finally {
-      setLoading(false)
+      if (guard.end(seq)) setLoading(false)
     }
-  }
+  }, [storedResume])
 
   useEffect(() => {
-    runAnalysis(selectedRole)
-  }, [selectedRole, storedResume])
+    if (!storedResume?.resumeText) {
+      // No resume uploaded in this session: discard anything in flight, drop
+      // stale results, and never call the AI provider.
+      runGuardRef.current.invalidate()
+      setAnalysis(null)
+      setLoading(false)
+      setError(null)
+      return
+    }
+    void runAnalysis(selectedRole)
+  }, [storedResume, selectedRole, runAnalysis])
 
   const handleRoleSelect = (role: string) => {
     setSelectedRole(role)
@@ -133,7 +161,7 @@ export default function SkillGapsPage() {
           <div className="space-y-2">
             <CardTitle className="text-lg font-bold">No Active Resume Found</CardTitle>
             <CardDescription className="max-w-sm mx-auto text-xs leading-relaxed">
-              To analyze your skill gaps, you first need to upload a resume. Please upload your resume on the Match Analysis page.
+              Upload your resume to get started. Skill gap analysis always runs on the resume you upload on the Match Analysis page — nothing is restored from a previous session.
             </CardDescription>
           </div>
           <div className="pt-2">
@@ -267,7 +295,7 @@ export default function SkillGapsPage() {
         <Card className="border-destructive/30 bg-destructive/10 p-5 text-destructive">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">{error}</p>
-            <Button variant="outline" size="sm" onClick={() => runAnalysis(selectedRole)}>
+            <Button variant="outline" size="sm" onClick={() => runAnalysis(selectedRole, { force: true })}>
               <RefreshCw className="mr-1.5 size-3.5" /> Retry Analysis
             </Button>
           </div>
@@ -290,6 +318,7 @@ export default function SkillGapsPage() {
                     </h2>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">{analysis.summary}</p>
+                  <ResultSourceNote source={analysis.source} className="mt-2" />
                 </div>
 
                 <div className="flex shrink-0 items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">

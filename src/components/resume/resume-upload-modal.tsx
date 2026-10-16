@@ -58,7 +58,11 @@ function toErrorMessage(error: unknown): string {
   ) {
     return "We couldn't reach the analysis service. Make sure the backend is running, then try again."
   }
-  if (normalized.includes('took too long') || normalized.includes('abort')) {
+  if (
+    normalized.includes('took too long') ||
+    normalized.includes('timed out') ||
+    normalized.includes('abort')
+  ) {
     return 'The analysis took too long to complete. Please try again.'
   }
   return message || 'Something went wrong while analyzing your resume. Please try again.'

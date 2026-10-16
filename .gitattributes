@@ -1,0 +1,50 @@
+# CareerLens cross-platform line-ending policy.
+#
+# Let git decide text vs binary, then pin the endings that each toolchain
+# expects so a Windows checkout and a macOS/Linux checkout behave identically.
+# This file only affects git checkout/index; it never rewrites files that are
+# simply copied out of a ZIP archive.
+
+# Default: normalize text files to LF in the repository, checkout natively.
+* text=auto
+
+# Windows entry points must stay CRLF so cmd.exe and older shells read them.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# POSIX shell scripts must stay LF.
+*.sh    text eol=lf
+
+# Source and config: normalize to LF everywhere.
+*.js    text eol=lf
+*.mjs   text eol=lf
+*.cjs   text eol=lf
+*.jsx   text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.json  text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.svg   text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+
+# Binary assets: never touch line endings or diff them as text.
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.avif  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+*.mp3   binary
+*.wav   binary
+*.webm  binary
+*.zip   binary
