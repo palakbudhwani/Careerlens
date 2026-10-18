@@ -1,0 +1,263 @@
+{
+  "dataset_id": "careerlens-offline-pilot",
+  "version": "0.1.0",
+  "label": "OFFLINE PILOT — feasibility checks ONLY. NOT the research benchmark (benchmark-v1 is Phase 5, not started). NOT final research data.",
+  "created": "2026-10-13",
+  "created_by": "OpenCode (Phase 4 offline pilot, authorized by user)",
+  "provenance": "100% synthetic. Names, e-mails, phone numbers, employers, universities and all resume/JD text are fictional and authored for this pilot. No real personal data, no scraped resumes, no real job postings.",
+  "purpose": "Validate that the rule-based matcher and the input gates can process baseline pairs and controlled edits as the protocol assumes, using only offline, zero-network code paths.",
+  "schema": {
+    "resumes[]": { "resume_id": "stable string", "role_family": "string", "experience_level": "string", "text": "full synthetic resume text (line-oriented, ALL-CAPS section headers required by collectEvidence)" },
+    "jobs[]": { "job_id": "stable string", "role_family": "string", "seniority": "string", "mentions_education_by_design": "bool", "text": "full synthetic job description text" },
+    "pairs[]": { "pair_id": "<job_id>__<resume_id>", "job_id": "ref", "resume_id": "ref", "designed_tier": "High|Mid|Low (authoring intent; actual overlap computed offline by the check script)", "rq3_selected": "bool — pilot controlled-edit subject" },
+    "edits[]": { "edit_id": "<pair_id>__<edit_type>", "pair_id": "ref", "edit_type": "E1_relevant_add|E2_relevant_remove|E3_irrelevant_add|E4_irrelevant_prose", "target_skill": "vocabulary skill name or null for E4", "variant_resume_text": "full resume text after the single change", "expected_rule_direction": "increase|decrease|zero", "expected_rationale": "pre-run justification", "manipulation_expectations": { "scan_skills_diff": "expected +skill / -skill / none", "count_keyword_before": "int", "count_keyword_after": "int" } }
+  },
+  "generation_process": "Hand-authored 2026-10-13 against backend constraints verified in REPOSITORY_AUDIT.md and backend source: >=50 words per field (server.js countWords), authenticity gates (llm.js collectValidationErrors/looksLikeResume), rule-arm skill vocabulary (ruleBasedFallback.js SKILL_VOCABULARY), ALL-CAPS section headers (isSectionHeader), experience lines need year ranges (collectEvidence), one change at a time per edit, E2/E1/E3 targets chosen from the JD requirement scan, E4 length-matched to E1 (+/-10% added characters) and containing no vocabulary skill.",
+  "role_distribution": {
+    "job_role_families": ["java-backend", "react-frontend", "python-ml", "devops-cloud"],
+    "resume_role_families": ["java-backend", "react-frontend", "python-ml", "devops-cloud"],
+    "experience_levels_resume": ["mid (3y)", "junior (1.5y)", "mid (2y)", "senior (6y)"],
+    "jobs_mentioning_education": ["P-J1", "P-J3"],
+    "jobs_not_mentioning_education": ["P-J2", "P-J4"]
+  },
+  "reproducibility": "Deterministic by construction: this file is the single source of truth; research/scripts/pilot_offline_check.mjs reads it, runs only buildMatchAnalysis + parseResume + scanSkills/extractJobRequirements/collectEvidence (all offline), and writes research/results/pilot/pilot_check_results.json. Re-run with: node research/scripts/pilot_offline_check.mjs. No randomness, no network, no AI matcher.",
+  "resumes": [
+    {
+      "resume_id": "P-R1",
+      "role_family": "java-backend",
+      "experience_level": "mid (3y)",
+      "text": "Aarav Mehta\naarav.mehta@example.com | +91-9000000001 | Bengaluru, India\n\nPROFESSIONAL SUMMARY\nBackend developer with three years of experience building payment services in Java.\n\nSKILLS\nJava, Spring Boot, SQL, PostgreSQL, Docker, REST APIs, Git\n\nEXPERIENCE\nBackend Developer — Finroute Systems | 2023 – Present\n- Built REST APIs in Spring Boot serving daily settlement jobs.\n- Optimized SQL queries for reporting dashboards and cut runtime by half.\n\nBackend Intern — Finroute Systems | 2022 – 2023\n- Wrote Java unit tests and fixed defects across services.\n- Containerized local environments with Docker Compose.\n\nPROJECTS\nLedger Analyzer | Java, Spring Boot, PostgreSQL | CLI tool for reconciling statements.\n\nEDUCATION\nB.Tech in Computer Science — State Technical University, 2022"
+    },
+    {
+      "resume_id": "P-R2",
+      "role_family": "react-frontend",
+      "experience_level": "junior (1.5y)",
+      "text": "Sara Khan\nsara.khan@example.com | +91-9000000002 | Pune, India\n\nPROFESSIONAL SUMMARY\nFrontend developer focused on accessible React interfaces.\n\nSKILLS\nReact, TypeScript, JavaScript, HTML, CSS, Git\n\nEXPERIENCE\nFrontend Developer — Civic Sites | 2024 – Present\n- Built responsive pages in React and TypeScript for local services.\n- Improved HTML semantics and CSS layout across marketing pages.\n\nWeb Intern — Civic Sites | 2023 – 2024\n- Fixed cross-browser bugs in HTML and CSS.\n- Reviewed interfaces with designers before weekly releases.\n\nPROJECTS\nMeal Planner | React, TypeScript | Weekly planning app with drag-and-drop lists.\n\nEDUCATION\nB.Sc in Information Technology — City College, 2023"
+    },
+    {
+      "resume_id": "P-R3",
+      "role_family": "python-ml",
+      "experience_level": "mid (2y)",
+      "text": "Rohan Iyer\nrohan.iyer@example.com | +91-9000000003 | Hyderabad, India\n\nPROFESSIONAL SUMMARY\nMachine learning engineer with two years building forecasting models.\n\nSKILLS\nPython, Machine Learning, Pandas, NumPy, scikit-learn, SQL, PyTorch\n\nEXPERIENCE\nML Engineer — AgriSense Analytics | 2023 – Present\n- Trained forecasting models in Python using scikit-learn and PyTorch.\n- Built Pandas and NumPy transformations for weekly sensor data.\n- Wrote SQL views consumed by dashboards.\n\nData Intern — AgriSense Analytics | 2022 – 2023\n- Cleaned datasets and produced evaluation reports in Python.\n\nPROJECTS\nCrop Yield Explorer | Python, Pandas, scikit-learn | Notebook comparing regression models.\n\nEDUCATION\nM.Sc in Data Science — Institute of Technology, 2023"
+    },
+    {
+      "resume_id": "P-R4",
+      "role_family": "devops-cloud",
+      "experience_level": "senior (6y)",
+      "text": "Meera Nair\nmeera.nair@example.com | +91-9000000004 | Chennai, India\n\nPROFESSIONAL SUMMARY\nSenior infrastructure engineer with six years running cloud platforms.\n\nSKILLS\nAWS, Docker, Kubernetes, CI/CD, Linux, Git, Jenkins\n\nEXPERIENCE\nSenior DevOps Engineer — Helio Media | 2022 – Present\n- Operate Kubernetes clusters on AWS with Docker-based delivery.\n- Maintain Jenkins CI/CD pipelines for twenty services.\n- Automate Linux fleet patching with Git-tracked scripts.\n\nDevOps Engineer — Helio Media | 2019 – 2022\n- Migrated batch workloads into containers on AWS.\n- Standardized CI/CD templates across three teams.\n\nPROJECTS\nCluster Cost Tracker | Go, AWS, Kubernetes | Internal tool reporting node utilization.\n\nEDUCATION\nB.E. in Electronics Engineering — Regional University, 2019"
+    }
+  ],
+  "jobs": [
+    {
+      "job_id": "P-J1",
+      "role_family": "java-backend",
+      "seniority": "mid",
+      "mentions_education_by_design": true,
+      "text": "Java Backend Engineer (Mid-Level)\n\nWe are hiring a Java Backend Engineer to build reliable services for our payments platform.\n\nRole and responsibilities:\n- Design and implement REST APIs using Java and Spring Boot.\n- Write efficient SQL against PostgreSQL and tune slow queries.\n- Own microservices in production with Docker-based deployments.\n- Collaborate with frontend engineers through well-defined contracts.\n\nRequirements:\n- Must have 2+ years of experience with Java and Spring Boot.\n- Must have experience with SQL and PostgreSQL.\n- Experience with Docker and Git is required.\n- Strong understanding of REST APIs and microservices.\n- A bachelor's degree in computer science or equivalent is preferred."
+    },
+    {
+      "job_id": "P-J2",
+      "role_family": "react-frontend",
+      "seniority": "junior",
+      "mentions_education_by_design": false,
+      "text": "React Frontend Developer (Junior)\n\nWe are looking for a Junior React Frontend Developer to grow with our product team.\n\nWhat you will do:\n- Build responsive user interfaces with React and TypeScript.\n- Implement accessible pages using HTML and CSS.\n- Maintain a shared component library and write unit tests.\n- Work closely with designers to ship small features every week.\n\nRequirements:\n- Must have working knowledge of React, TypeScript, and JavaScript.\n- Experience with HTML, CSS, and Git is required.\n- Familiarity with Redux is a strong plus.\n- A portfolio of personal projects is required."
+    },
+    {
+      "job_id": "P-J3",
+      "role_family": "python-ml",
+      "seniority": "mid",
+      "mentions_education_by_design": true,
+      "text": "Machine Learning Engineer (Mid-Level)\n\nOur data products team needs a Machine Learning Engineer to build and ship models.\n\nRole and responsibilities:\n- Develop training and evaluation pipelines in Python.\n- Build models using scikit-learn and deep learning techniques.\n- Analyse large datasets with Pandas and NumPy.\n- Package services with Docker and collaborate on SQL data stores.\n\nRequirements:\n- Must have 2+ years of experience with Python and machine learning.\n- Must have hands-on experience with Pandas, NumPy, and scikit-learn.\n- Experience with SQL and Docker is required.\n- A master's degree in a quantitative field is preferred."
+    },
+    {
+      "job_id": "P-J4",
+      "role_family": "devops-cloud",
+      "seniority": "senior",
+      "mentions_education_by_design": false,
+      "text": "Senior DevOps Engineer (Senior)\n\nWe are hiring a Senior DevOps Engineer to own our cloud platform.\n\nWhat you will do:\n- Manage infrastructure as code with Terraform on AWS.\n- Operate Kubernetes clusters and Docker workloads at scale.\n- Maintain CI/CD pipelines and Linux fleet reliability.\n- Mentor engineers on incident response and system health.\n\nRequirements:\n- Must have 5+ years of experience with AWS and Linux.\n- Experience with Docker, Kubernetes, and Terraform is required.\n- Must have strong CI/CD and Git skills.\n- Nginx configuration experience is a plus."
+    }
+  ],
+  "pairs": [
+    { "pair_id": "P-J1__P-R1", "job_id": "P-J1", "resume_id": "P-R1", "designed_tier": "High", "rq3_selected": true },
+    { "pair_id": "P-J1__P-R2", "job_id": "P-J1", "resume_id": "P-R2", "designed_tier": "Low", "rq3_selected": false },
+    { "pair_id": "P-J1__P-R3", "job_id": "P-J1", "resume_id": "P-R3", "designed_tier": "Low", "rq3_selected": false },
+    { "pair_id": "P-J1__P-R4", "job_id": "P-J1", "resume_id": "P-R4", "designed_tier": "Mid", "rq3_selected": false },
+    { "pair_id": "P-J2__P-R1", "job_id": "P-J2", "resume_id": "P-R1", "designed_tier": "Low", "rq3_selected": false },
+    { "pair_id": "P-J2__P-R2", "job_id": "P-J2", "resume_id": "P-R2", "designed_tier": "High", "rq3_selected": true },
+    { "pair_id": "P-J2__P-R3", "job_id": "P-J2", "resume_id": "P-R3", "designed_tier": "Low", "rq3_selected": false },
+    { "pair_id": "P-J2__P-R4", "job_id": "P-J2", "resume_id": "P-R4", "designed_tier": "Low", "rq3_selected": false },
+    { "pair_id": "P-J3__P-R1", "job_id": "P-J3", "resume_id": "P-R1", "designed_tier": "Low", "rq3_selected": false },
+    { "pair_id": "P-J3__P-R2", "job_id": "P-J3", "resume_id": "P-R2", "designed_tier": "Low", "rq3_selected": false },
+    { "pair_id": "P-J3__P-R3", "job_id": "P-J3", "resume_id": "P-R3", "designed_tier": "High", "rq3_selected": true },
+    { "pair_id": "P-J3__P-R4", "job_id": "P-J3", "resume_id": "P-R4", "designed_tier": "Mid", "rq3_selected": false },
+    { "pair_id": "P-J4__P-R1", "job_id": "P-J4", "resume_id": "P-R1", "designed_tier": "Mid", "rq3_selected": false },
+    { "pair_id": "P-J4__P-R2", "job_id": "P-J4", "resume_id": "P-R2", "designed_tier": "Low", "rq3_selected": false },
+    { "pair_id": "P-J4__P-R3", "job_id": "P-J4", "resume_id": "P-R3", "designed_tier": "Low", "rq3_selected": false },
+    { "pair_id": "P-J4__P-R4", "job_id": "P-J4", "resume_id": "P-R4", "designed_tier": "High", "rq3_selected": true }
+  ],
+  "edits": [
+    {
+      "edit_id": "P-J1__P-R1__E1",
+      "pair_id": "P-J1__P-R1",
+      "edit_type": "E1_relevant_add",
+      "target_skill": "Microservices",
+      "expected_rule_direction": "increase",
+      "expected_rationale": "Target is in P-J1's requirement scan and absent from P-R1 (countKeyword 0 -> 2): matching +1 raises skillsMatchScore (x0.4) and keyword band 0->80 (x0.2); experience and education untouched; baseline expected < 100 so no clamp.",
+      "manipulation_expectations": { "scan_skills_diff": "+Microservices", "count_keyword_before": 0, "count_keyword_after": 2 },
+      "variant_resume_text": "Aarav Mehta\naarav.mehta@example.com | +91-9000000001 | Bengaluru, India\n\nPROFESSIONAL SUMMARY\nBackend developer with three years of experience building payment services in Java.\n\nSKILLS\nJava, Spring Boot, SQL, PostgreSQL, Docker, REST APIs, Git, Microservices\n\nEXPERIENCE\nBackend Developer — Finroute Systems | 2023 – Present\n- Built REST APIs in Spring Boot serving daily settlement jobs.\n- Optimized SQL queries for reporting dashboards and cut runtime by half.\n- Designed microservices boundaries for the settlement domain.\n\nBackend Intern — Finroute Systems | 2022 – 2023\n- Wrote Java unit tests and fixed defects across services.\n- Containerized local environments with Docker Compose.\n\nPROJECTS\nLedger Analyzer | Java, Spring Boot, PostgreSQL | CLI tool for reconciling statements.\n\nEDUCATION\nB.Tech in Computer Science — State Technical University, 2022"
+    },
+    {
+      "edit_id": "P-J1__P-R1__E2",
+      "pair_id": "P-J1__P-R1",
+      "edit_type": "E2_relevant_remove",
+      "target_skill": "SQL",
+      "expected_rule_direction": "decrease",
+      "expected_rationale": "Target is in P-J1's requirement scan and present in P-R1 (countKeyword 2 -> 0): matching -1 lowers skillsMatchScore (x0.4) and keyword band 80->0 (x0.2); other components untouched.",
+      "manipulation_expectations": { "scan_skills_diff": "-SQL", "count_keyword_before": 2, "count_keyword_after": 0 },
+      "variant_resume_text": "Aarav Mehta\naarav.mehta@example.com | +91-9000000001 | Bengaluru, India\n\nPROFESSIONAL SUMMARY\nBackend developer with three years of experience building payment services in Java.\n\nSKILLS\nJava, Spring Boot, PostgreSQL, Docker, REST APIs, Git\n\nEXPERIENCE\nBackend Developer — Finroute Systems | 2023 – Present\n- Built REST APIs in Spring Boot serving daily settlement jobs.\n- Optimized queries for reporting dashboards and cut runtime by half.\n\nBackend Intern — Finroute Systems | 2022 – 2023\n- Wrote Java unit tests and fixed defects across services.\n- Containerized local environments with Docker Compose.\n\nPROJECTS\nLedger Analyzer | Java, Spring Boot, PostgreSQL | CLI tool for reconciling statements.\n\nEDUCATION\nB.Tech in Computer Science — State Technical University, 2022"
+    },
+    {
+      "edit_id": "P-J1__P-R1__E3",
+      "pair_id": "P-J1__P-R1",
+      "edit_type": "E3_irrelevant_add",
+      "target_skill": "React",
+      "expected_rule_direction": "zero",
+      "expected_rationale": "Target is in SKILL_VOCABULARY but NOT in P-J1's requirement scan: required set, matching set, and keyword counts over required names are all unchanged, so every formula component is unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "+React", "count_keyword_before": 0, "count_keyword_after": 1 },
+      "variant_resume_text": "Aarav Mehta\naarav.mehta@example.com | +91-9000000001 | Bengaluru, India\n\nPROFESSIONAL SUMMARY\nBackend developer with three years of experience building payment services in Java.\n\nSKILLS\nJava, Spring Boot, SQL, PostgreSQL, Docker, REST APIs, Git, React\n\nEXPERIENCE\nBackend Developer — Finroute Systems | 2023 – Present\n- Built REST APIs in Spring Boot serving daily settlement jobs.\n- Optimized SQL queries for reporting dashboards and cut runtime by half.\n\nBackend Intern — Finroute Systems | 2022 – 2023\n- Wrote Java unit tests and fixed defects across services.\n- Containerized local environments with Docker Compose.\n\nPROJECTS\nLedger Analyzer | Java, Spring Boot, PostgreSQL | CLI tool for reconciling statements.\n\nEDUCATION\nB.Tech in Computer Science — State Technical University, 2022"
+    },
+    {
+      "edit_id": "P-J1__P-R1__E4",
+      "pair_id": "P-J1__P-R1",
+      "edit_type": "E4_irrelevant_prose",
+      "target_skill": null,
+      "expected_rule_direction": "zero",
+      "expected_rationale": "Neutral prose containing no SKILL_VOCABULARY skill and no JD skill string, inserted before the first section header (no section/experience/education effect); length-matched to this pair's E1 addition (+/-10% added characters). Formula inputs unchanged => score unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "none", "count_keyword_before": 0, "count_keyword_after": 0 },
+      "variant_resume_text": "Aarav Mehta\naarav.mehta@example.com | +91-9000000001 | Bengaluru, India\nOutside work I enjoy trail running, film photography, and weekend cooking.\n\nPROFESSIONAL SUMMARY\nBackend developer with three years of experience building payment services in Java.\n\nSKILLS\nJava, Spring Boot, SQL, PostgreSQL, Docker, REST APIs, Git\n\nEXPERIENCE\nBackend Developer — Finroute Systems | 2023 – Present\n- Built REST APIs in Spring Boot serving daily settlement jobs.\n- Optimized SQL queries for reporting dashboards and cut runtime by half.\n\nBackend Intern — Finroute Systems | 2022 – 2023\n- Wrote Java unit tests and fixed defects across services.\n- Containerized local environments with Docker Compose.\n\nPROJECTS\nLedger Analyzer | Java, Spring Boot, PostgreSQL | CLI tool for reconciling statements.\n\nEDUCATION\nB.Tech in Computer Science — State Technical University, 2022"
+    },
+
+    {
+      "edit_id": "P-J2__P-R2__E1",
+      "pair_id": "P-J2__P-R2",
+      "edit_type": "E1_relevant_add",
+      "target_skill": "Redux",
+      "expected_rule_direction": "increase",
+      "expected_rationale": "Redux is required by P-J2 and absent from P-R2 (0 -> 2): matching +1 raises skillsMatchScore (x0.4) and keyword band 0->80 (x0.2); other components unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "+Redux", "count_keyword_before": 0, "count_keyword_after": 2 },
+      "variant_resume_text": "Sara Khan\nsara.khan@example.com | +91-9000000002 | Pune, India\n\nPROFESSIONAL SUMMARY\nFrontend developer focused on accessible React interfaces.\n\nSKILLS\nReact, TypeScript, JavaScript, HTML, CSS, Git, Redux\n\nEXPERIENCE\nFrontend Developer — Civic Sites | 2024 – Present\n- Built responsive pages in React and TypeScript for local services.\n- Improved HTML semantics and CSS layout across marketing pages.\n- Built a shared Redux store for cross-page state in our admin tool.\n\nWeb Intern — Civic Sites | 2023 – 2024\n- Fixed cross-browser bugs in HTML and CSS.\n- Reviewed interfaces with designers before weekly releases.\n\nPROJECTS\nMeal Planner | React, TypeScript | Weekly planning app with drag-and-drop lists.\n\nEDUCATION\nB.Sc in Information Technology — City College, 2023"
+    },
+    {
+      "edit_id": "P-J2__P-R2__E2",
+      "pair_id": "P-J2__P-R2",
+      "edit_type": "E2_relevant_remove",
+      "target_skill": "CSS",
+      "expected_rule_direction": "decrease",
+      "expected_rationale": "CSS is required by P-J2 and present in P-R2 (3 -> 0): matching -1 and keyword band 100->0 lower skillsMatchScore (x0.4) and keywordDensityScore (x0.2).",
+      "manipulation_expectations": { "scan_skills_diff": "-CSS", "count_keyword_before": 3, "count_keyword_after": 0 },
+      "variant_resume_text": "Sara Khan\nsara.khan@example.com | +91-9000000002 | Pune, India\n\nPROFESSIONAL SUMMARY\nFrontend developer focused on accessible React interfaces.\n\nSKILLS\nReact, TypeScript, JavaScript, HTML, Git\n\nEXPERIENCE\nFrontend Developer — Civic Sites | 2024 – Present\n- Built responsive pages in React and TypeScript for local services.\n- Improved HTML semantics and layout across marketing pages.\n\nWeb Intern — Civic Sites | 2023 – 2024\n- Fixed cross-browser bugs in HTML.\n- Reviewed interfaces with designers before weekly releases.\n\nPROJECTS\nMeal Planner | React, TypeScript | Weekly planning app with drag-and-drop lists.\n\nEDUCATION\nB.Sc in Information Technology — City College, 2023"
+    },
+    {
+      "edit_id": "P-J2__P-R2__E3",
+      "pair_id": "P-J2__P-R2",
+      "edit_type": "E3_irrelevant_add",
+      "target_skill": "GraphQL",
+      "expected_rule_direction": "zero",
+      "expected_rationale": "GraphQL is in the vocabulary but not in P-J2's requirement scan: required/matching sets and keyword counts over required names unchanged => every component unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "+GraphQL", "count_keyword_before": 0, "count_keyword_after": 1 },
+      "variant_resume_text": "Sara Khan\nsara.khan@example.com | +91-9000000002 | Pune, India\n\nPROFESSIONAL SUMMARY\nFrontend developer focused on accessible React interfaces.\n\nSKILLS\nReact, TypeScript, JavaScript, HTML, CSS, Git, GraphQL\n\nEXPERIENCE\nFrontend Developer — Civic Sites | 2024 – Present\n- Built responsive pages in React and TypeScript for local services.\n- Improved HTML semantics and CSS layout across marketing pages.\n\nWeb Intern — Civic Sites | 2023 – 2024\n- Fixed cross-browser bugs in HTML and CSS.\n- Reviewed interfaces with designers before weekly releases.\n\nPROJECTS\nMeal Planner | React, TypeScript | Weekly planning app with drag-and-drop lists.\n\nEDUCATION\nB.Sc in Information Technology — City College, 2023"
+    },
+    {
+      "edit_id": "P-J2__P-R2__E4",
+      "pair_id": "P-J2__P-R2",
+      "edit_type": "E4_irrelevant_prose",
+      "target_skill": null,
+      "expected_rule_direction": "zero",
+      "expected_rationale": "Neutral prose with no vocabulary skill, inserted before the first section header; length-matched to this pair's E1 addition (+/-10%). Formula inputs unchanged => score unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "none", "count_keyword_before": 0, "count_keyword_after": 0 },
+      "variant_resume_text": "Sara Khan\nsara.khan@example.com | +91-9000000002 | Pune, India\nOutside work I enjoy trail running, film photography, and new recipes.\n\nPROFESSIONAL SUMMARY\nFrontend developer focused on accessible React interfaces.\n\nSKILLS\nReact, TypeScript, JavaScript, HTML, CSS, Git\n\nEXPERIENCE\nFrontend Developer — Civic Sites | 2024 – Present\n- Built responsive pages in React and TypeScript for local services.\n- Improved HTML semantics and CSS layout across marketing pages.\n\nWeb Intern — Civic Sites | 2023 – 2024\n- Fixed cross-browser bugs in HTML and CSS.\n- Reviewed interfaces with designers before weekly releases.\n\nPROJECTS\nMeal Planner | React, TypeScript | Weekly planning app with drag-and-drop lists.\n\nEDUCATION\nB.Sc in Information Technology — City College, 2023"
+    },
+
+    {
+      "edit_id": "P-J3__P-R3__E1",
+      "pair_id": "P-J3__P-R3",
+      "edit_type": "E1_relevant_add",
+      "target_skill": "Docker",
+      "expected_rule_direction": "increase",
+      "expected_rationale": "Docker is required by P-J3 and absent from P-R3 (0 -> 2): matching +1 and keyword band 0->80 raise the score via x0.4 and x0.2 weights; other components unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "+Docker", "count_keyword_before": 0, "count_keyword_after": 2 },
+      "variant_resume_text": "Rohan Iyer\nrohan.iyer@example.com | +91-9000000003 | Hyderabad, India\n\nPROFESSIONAL SUMMARY\nMachine learning engineer with two years building forecasting models.\n\nSKILLS\nPython, Machine Learning, Pandas, NumPy, scikit-learn, SQL, PyTorch, Docker\n\nEXPERIENCE\nML Engineer — AgriSense Analytics | 2023 – Present\n- Trained forecasting models in Python using scikit-learn and PyTorch.\n- Built Pandas and NumPy transformations for weekly sensor data.\n- Wrote SQL views consumed by dashboards.\n- Packaged inference services with Docker for staging releases.\n\nData Intern — AgriSense Analytics | 2022 – 2023\n- Cleaned datasets and produced evaluation reports in Python.\n\nPROJECTS\nCrop Yield Explorer | Python, Pandas, scikit-learn | Notebook comparing regression models.\n\nEDUCATION\nM.Sc in Data Science — Institute of Technology, 2023"
+    },
+    {
+      "edit_id": "P-J3__P-R3__E2",
+      "pair_id": "P-J3__P-R3",
+      "edit_type": "E2_relevant_remove",
+      "target_skill": "SQL",
+      "expected_rule_direction": "decrease",
+      "expected_rationale": "SQL is required by P-J3 and present in P-R3 (2 -> 0): matching -1 and keyword band drop lower skillsMatchScore (x0.4) and keywordDensityScore (x0.2).",
+      "manipulation_expectations": { "scan_skills_diff": "-SQL", "count_keyword_before": 2, "count_keyword_after": 0 },
+      "variant_resume_text": "Rohan Iyer\nrohan.iyer@example.com | +91-9000000003 | Hyderabad, India\n\nPROFESSIONAL SUMMARY\nMachine learning engineer with two years building forecasting models.\n\nSKILLS\nPython, Machine Learning, Pandas, NumPy, scikit-learn, PyTorch\n\nEXPERIENCE\nML Engineer — AgriSense Analytics | 2023 – Present\n- Trained forecasting models in Python using scikit-learn and PyTorch.\n- Built Pandas and NumPy transformations for weekly sensor data.\n- Wrote reporting views consumed by dashboards.\n\nData Intern — AgriSense Analytics | 2022 – 2023\n- Cleaned datasets and produced evaluation reports in Python.\n\nPROJECTS\nCrop Yield Explorer | Python, Pandas, scikit-learn | Notebook comparing regression models.\n\nEDUCATION\nM.Sc in Data Science — Institute of Technology, 2023"
+    },
+    {
+      "edit_id": "P-J3__P-R3__E3",
+      "pair_id": "P-J3__P-R3",
+      "edit_type": "E3_irrelevant_add",
+      "target_skill": "Kubernetes",
+      "expected_rule_direction": "zero",
+      "expected_rationale": "Kubernetes is in the vocabulary but not in P-J3's requirement scan: no formula input changes => score unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "+Kubernetes", "count_keyword_before": 0, "count_keyword_after": 1 },
+      "variant_resume_text": "Rohan Iyer\nrohan.iyer@example.com | +91-9000000003 | Hyderabad, India\n\nPROFESSIONAL SUMMARY\nMachine learning engineer with two years building forecasting models.\n\nSKILLS\nPython, Machine Learning, Pandas, NumPy, scikit-learn, SQL, PyTorch, Kubernetes\n\nEXPERIENCE\nML Engineer — AgriSense Analytics | 2023 – Present\n- Trained forecasting models in Python using scikit-learn and PyTorch.\n- Built Pandas and NumPy transformations for weekly sensor data.\n- Wrote SQL views consumed by dashboards.\n\nData Intern — AgriSense Analytics | 2022 – 2023\n- Cleaned datasets and produced evaluation reports in Python.\n\nPROJECTS\nCrop Yield Explorer | Python, Pandas, scikit-learn | Notebook comparing regression models.\n\nEDUCATION\nM.Sc in Data Science — Institute of Technology, 2023"
+    },
+    {
+      "edit_id": "P-J3__P-R3__E4",
+      "pair_id": "P-J3__P-R3",
+      "edit_type": "E4_irrelevant_prose",
+      "target_skill": null,
+      "expected_rule_direction": "zero",
+      "expected_rationale": "Neutral prose with no vocabulary skill, inserted before the first section header; length-matched to this pair's E1 addition (+/-10%). Formula inputs unchanged => score unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "none", "count_keyword_before": 0, "count_keyword_after": 0 },
+      "variant_resume_text": "Rohan Iyer\nrohan.iyer@example.com | +91-9000000003 | Hyderabad, India\nOutside work I enjoy trail running, film photography, and cooking.\n\nPROFESSIONAL SUMMARY\nMachine learning engineer with two years building forecasting models.\n\nSKILLS\nPython, Machine Learning, Pandas, NumPy, scikit-learn, SQL, PyTorch\n\nEXPERIENCE\nML Engineer — AgriSense Analytics | 2023 – Present\n- Trained forecasting models in Python using scikit-learn and PyTorch.\n- Built Pandas and NumPy transformations for weekly sensor data.\n- Wrote SQL views consumed by dashboards.\n\nData Intern — AgriSense Analytics | 2022 – 2023\n- Cleaned datasets and produced evaluation reports in Python.\n\nPROJECTS\nCrop Yield Explorer | Python, Pandas, scikit-learn | Notebook comparing regression models.\n\nEDUCATION\nM.Sc in Data Science — Institute of Technology, 2023"
+    },
+
+    {
+      "edit_id": "P-J4__P-R4__E1",
+      "pair_id": "P-J4__P-R4",
+      "edit_type": "E1_relevant_add",
+      "target_skill": "Nginx",
+      "expected_rule_direction": "increase",
+      "expected_rationale": "Nginx is required by P-J4 and absent from P-R4 (0 -> 2): matching +1 and keyword band 0->80 raise the score; baseline expected well below 100 so the increase is not clamped.",
+      "manipulation_expectations": { "scan_skills_diff": "+Nginx", "count_keyword_before": 0, "count_keyword_after": 2 },
+      "variant_resume_text": "Meera Nair\nmeera.nair@example.com | +91-9000000004 | Chennai, India\n\nPROFESSIONAL SUMMARY\nSenior infrastructure engineer with six years running cloud platforms.\n\nSKILLS\nAWS, Docker, Kubernetes, CI/CD, Linux, Git, Jenkins, Nginx\n\nEXPERIENCE\nSenior DevOps Engineer — Helio Media | 2022 – Present\n- Operate Kubernetes clusters on AWS with Docker-based delivery.\n- Maintain Jenkins CI/CD pipelines for twenty services.\n- Automate Linux fleet patching with Git-tracked scripts.\n- Configured Nginx reverse proxies for internal services.\n\nDevOps Engineer — Helio Media | 2019 – 2022\n- Migrated batch workloads into containers on AWS.\n- Standardized CI/CD templates across three teams.\n\nPROJECTS\nCluster Cost Tracker | Go, AWS, Kubernetes | Internal tool reporting node utilization.\n\nEDUCATION\nB.E. in Electronics Engineering — Regional University, 2019"
+    },
+    {
+      "edit_id": "P-J4__P-R4__E2",
+      "pair_id": "P-J4__P-R4",
+      "edit_type": "E2_relevant_remove",
+      "target_skill": "Linux",
+      "expected_rule_direction": "decrease",
+      "expected_rationale": "Linux is required by P-J4 and present in P-R4 (2 -> 0): matching -1 and keyword band drop lower skillsMatchScore (x0.4) and keywordDensityScore (x0.2).",
+      "manipulation_expectations": { "scan_skills_diff": "-Linux", "count_keyword_before": 2, "count_keyword_after": 0 },
+      "variant_resume_text": "Meera Nair\nmeera.nair@example.com | +91-9000000004 | Chennai, India\n\nPROFESSIONAL SUMMARY\nSenior infrastructure engineer with six years running cloud platforms.\n\nSKILLS\nAWS, Docker, Kubernetes, CI/CD, Git, Jenkins\n\nEXPERIENCE\nSenior DevOps Engineer — Helio Media | 2022 – Present\n- Operate Kubernetes clusters on AWS with Docker-based delivery.\n- Maintain Jenkins CI/CD pipelines for twenty services.\n- Automate fleet patching with Git-tracked scripts.\n\nDevOps Engineer — Helio Media | 2019 – 2022\n- Migrated batch workloads into containers on AWS.\n- Standardized CI/CD templates across three teams.\n\nPROJECTS\nCluster Cost Tracker | Go, AWS, Kubernetes | Internal tool reporting node utilization.\n\nEDUCATION\nB.E. in Electronics Engineering — Regional University, 2019"
+    },
+    {
+      "edit_id": "P-J4__P-R4__E3",
+      "pair_id": "P-J4__P-R4",
+      "edit_type": "E3_irrelevant_add",
+      "target_skill": "GraphQL",
+      "expected_rule_direction": "zero",
+      "expected_rationale": "GraphQL is in the vocabulary but not in P-J4's requirement scan: no formula input changes => score unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "+GraphQL", "count_keyword_before": 0, "count_keyword_after": 1 },
+      "variant_resume_text": "Meera Nair\nmeera.nair@example.com | +91-9000000004 | Chennai, India\n\nPROFESSIONAL SUMMARY\nSenior infrastructure engineer with six years running cloud platforms.\n\nSKILLS\nAWS, Docker, Kubernetes, CI/CD, Linux, Git, Jenkins, GraphQL\n\nEXPERIENCE\nSenior DevOps Engineer — Helio Media | 2022 – Present\n- Operate Kubernetes clusters on AWS with Docker-based delivery.\n- Maintain Jenkins CI/CD pipelines for twenty services.\n- Automate Linux fleet patching with Git-tracked scripts.\n\nDevOps Engineer — Helio Media | 2019 – 2022\n- Migrated batch workloads into containers on AWS.\n- Standardized CI/CD templates across three teams.\n\nPROJECTS\nCluster Cost Tracker | Go, AWS, Kubernetes | Internal tool reporting node utilization.\n\nEDUCATION\nB.E. in Electronics Engineering — Regional University, 2019"
+    },
+    {
+      "edit_id": "P-J4__P-R4__E4",
+      "pair_id": "P-J4__P-R4",
+      "edit_type": "E4_irrelevant_prose",
+      "target_skill": null,
+      "expected_rule_direction": "zero",
+      "expected_rationale": "Neutral prose with no vocabulary skill, inserted before the first section header; length-matched to this pair's E1 addition (+/-10%). Formula inputs unchanged => score unchanged.",
+      "manipulation_expectations": { "scan_skills_diff": "none", "count_keyword_before": 0, "count_keyword_after": 0 },
+      "variant_resume_text": "Meera Nair\nmeera.nair@example.com | +91-9000000004 | Chennai, India\nOutside work I enjoy trail running, film photography, and cooking.\n\nPROFESSIONAL SUMMARY\nSenior infrastructure engineer with six years running cloud platforms.\n\nSKILLS\nAWS, Docker, Kubernetes, CI/CD, Linux, Git, Jenkins\n\nEXPERIENCE\nSenior DevOps Engineer — Helio Media | 2022 – Present\n- Operate Kubernetes clusters on AWS with Docker-based delivery.\n- Maintain Jenkins CI/CD pipelines for twenty services.\n- Automate Linux fleet patching with Git-tracked scripts.\n\nDevOps Engineer — Helio Media | 2019 – 2022\n- Migrated batch workloads into containers on AWS.\n- Standardized CI/CD templates across three teams.\n\nPROJECTS\nCluster Cost Tracker | Go, AWS, Kubernetes | Internal tool reporting node utilization.\n\nEDUCATION\nB.E. in Electronics Engineering — Regional University, 2019"
+    }
+  ]
+}

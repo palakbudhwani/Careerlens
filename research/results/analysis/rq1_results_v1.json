@@ -1,0 +1,75 @@
+{
+  "dataset_id": "careerlens-rq1-observations-v1",
+  "n": 31,
+  "status": "ok",
+  "mae": 9.129032258064516,
+  "medad": 8,
+  "bias": 4.161290322580645,
+  "sd_d": 10.491573679842785,
+  "loa_lower": -16.402194089911216,
+  "loa_upper": 24.724774735072504,
+  "pct_within_5": 38.70967741935484,
+  "pct_within_10": 67.74193548387096,
+  "pearson_r": 0.9086217540193391,
+  "spearman_rho": 0.9080720830277508,
+  "fisher_z_reference": {
+    "half_width": 0.37040518354904267,
+    "ci_lower": 0.8174754235141426,
+    "ci_upper": 0.9553704868472582,
+    "label": "reference (independence assumption — does not hold)"
+  },
+  "cluster_bootstrap_indicative": {
+    "status": "ok",
+    "label": "indicative (few-cluster bootstrap) — not calibrated 95% coverage",
+    "seed": 20261013,
+    "iters": 10000,
+    "alpha": 0.05,
+    "clusters": {
+      "resumes": 12,
+      "jobs": 10
+    },
+    "warning": null,
+    "cis": {
+      "mae": {
+        "point": 9.129032258064516,
+        "lower": 5.933275862068966,
+        "upper": 13.21875,
+        "used": 10000
+      },
+      "medad": {
+        "point": 8,
+        "lower": 4,
+        "upper": 12,
+        "used": 10000
+      },
+      "bias": {
+        "point": 4.161290322580645,
+        "lower": -1.3181818181818181,
+        "upper": 10.175036764705883,
+        "used": 10000
+      },
+      "pct_within_5": {
+        "point": 38.70967741935484,
+        "lower": 13.333333333333334,
+        "upper": 66.66666666666667,
+        "used": 10000
+      },
+      "pct_within_10": {
+        "point": 67.74193548387096,
+        "lower": 39.285714285714285,
+        "upper": 92,
+        "used": 10000
+      },
+      "spearman_rho": {
+        "point": 0.9080720830277508,
+        "lower": 0.6878605851139705,
+        "upper": 0.9827114109477056,
+        "used": 10000
+      }
+    },
+    "redraws": 0,
+    "failed_replicates": 0
+  },
+  "excluded": [],
+  "ground_truth_note": "No independently validated ground-truth ATS scores exist; agreement with a rule-based score is NOT accuracy."
+}

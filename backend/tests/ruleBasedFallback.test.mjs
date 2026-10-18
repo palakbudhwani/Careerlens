@@ -413,21 +413,34 @@ test('source labels are honest on AI, fallback-AI, and rule-based paths', async 
 // ---------------------------------------------------------------------------
 
 test('validation/credential errors do NOT trigger the rule-based fallback', async () => {
+  // A Gemini HTTP 400 is provider-specific: the fallback provider still gets
+  // exactly one attempt (it uses its own key, model, and request format, so it
+  // may succeed where the primary's request was rejected), but when that
+  // attempt also fails the local formula is never used — validation and
+  // credential failures keep propagating as errors.
   geminiHandler = () => geminiHttpError(400, 'INVALID_ARGUMENT: request schema was rejected');
   await assert.rejects(
     () => analyzeMatch(RESUME_A, JD_A),
-    (err) => err instanceof AiProviderError && err.code === 'AI_BAD_REQUEST'
+    (err) =>
+      err instanceof AiProviderError &&
+      err.code === 'AI_PROVIDERS_EXHAUSTED' &&
+      err.primaryCode === 'AI_BAD_REQUEST' &&
+      err.localFallbackEligible === false
   );
-  assert.equal(counts().groq, 0, 'an HTTP 400 must not fall back to Groq');
   assert.equal(counts().gemini, 1);
+  assert.equal(counts().groq, 1, 'the provider-specific rejection gets exactly one fallback attempt');
 
   events.length = 0;
   geminiHandler = () => geminiHttpError(401, 'API key not valid');
   await assert.rejects(
     () => analyzeSkillGaps(RESUME_A, ['React'], 'Frontend Engineer', JD_A),
-    (err) => err instanceof AiProviderError && err.code === 'AI_UNAUTHORIZED'
+    (err) =>
+      err instanceof AiProviderError &&
+      err.code === 'AI_PROVIDERS_EXHAUSTED' &&
+      err.primaryCode === 'AI_UNAUTHORIZED' &&
+      err.localFallbackEligible === false
   );
-  assert.equal(counts().groq, 0, 'credential errors must not fall back either');
+  assert.equal(counts().groq, 1, 'credential errors never authorize a rule-based takeover');
 });
 
 test('single-provider mode (no fallback configured) propagates errors instead of silently falling back', async () => {

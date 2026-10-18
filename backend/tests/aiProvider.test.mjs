@@ -107,7 +107,9 @@ test('explicit completion-token budgets are forwarded, defaulted, and clamped', 
 test('each llm task sends its own token budget', async () => {
   nextResponse = okJson('{"matchId":"m1","atsScore":80}');
   await analyzeMatch(RESUME, JOB);
-  assert.equal(calls.at(-1).body.max_completion_tokens, 2000);
+  // 3000: the match schema is the largest one and reasoning/thinking tokens
+  // share the same budget as the document (see TOKEN_LIMITS in llm.js).
+  assert.equal(calls.at(-1).body.max_completion_tokens, 3000);
 
   nextResponse = okJson('{"resumeBasedQuestions":[],"roleBasedQuestions":[]}');
   await generateQuestions(RESUME, JOB, 'Mid', 5);

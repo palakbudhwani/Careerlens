@@ -1,0 +1,1532 @@
+{
+  "meta": {
+    "script": "research/scripts/pilot_offline_check.mjs",
+    "run_at": "2026-10-12T19:56:23.748Z",
+    "node": "v24.19.0",
+    "dataset_id": "careerlens-offline-pilot",
+    "dataset_version": "0.1.0",
+    "dataset_path": "research/data/pilot/pilot_dataset.json",
+    "label": "OFFLINE PILOT — feasibility checks ONLY. Not the research benchmark, not final research data.",
+    "guards": {
+      "AI_PROVIDER": "none",
+      "AI_FALLBACK_PROVIDER": "none",
+      "fetch_blocked": true,
+      "ai_matcher_called": false,
+      "network_used": false
+    },
+    "code_paths_used": [
+      "backend/ruleBasedFallback.js: buildMatchAnalysis, scanSkills, extractJobRequirements, collectEvidence",
+      "backend/llm.js: parseResume (deterministic extractResumeDetails, no provider call)"
+    ],
+    "code_paths_not_used": [
+      "backend/llm.js: analyzeMatch (AI arm) — NOT called"
+    ]
+  },
+  "checks": [
+    {
+      "id": "c0_dataset_integrity",
+      "name": "Pilot dataset structure (4x4 crossing, 4 rq3 pairs, 4 edits each, refs resolve)",
+      "status": "pass",
+      "evaluated": 8,
+      "failed_items": []
+    },
+    {
+      "id": "c1a_word_count_gate",
+      "name": ">=50 words per field (server.js countWords gate, mirrored)",
+      "status": "pass",
+      "evaluated": 24,
+      "failed_items": []
+    },
+    {
+      "id": "c1b_authenticity_gate",
+      "name": "parseResume authenticity gates pass for all resumes and edit variants",
+      "status": "pass",
+      "evaluated": 20,
+      "failed_items": []
+    },
+    {
+      "id": "c2_baseline_processing",
+      "name": "buildMatchAnalysis processes all 16 baseline pairs; scores, breakdown, formula and schema valid",
+      "status": "pass",
+      "evaluated": 16,
+      "failed_items": []
+    },
+    {
+      "id": "c3_determinism",
+      "name": "rule arm is deterministic: identical output on repeated runs (16 pairs + 16 variants)",
+      "status": "pass",
+      "evaluated": 32,
+      "failed_items": []
+    },
+    {
+      "id": "c4a_manipulation_scan_diff",
+      "name": "scanSkills diff matches every predeclared manipulation expectation",
+      "status": "pass",
+      "evaluated": 16,
+      "failed_items": []
+    },
+    {
+      "id": "c4b_manipulation_keyword_counts",
+      "name": "vocabulary keyword counts match predeclared before/after expectations",
+      "status": "pass",
+      "evaluated": 16,
+      "failed_items": []
+    },
+    {
+      "id": "c5_edit_direction",
+      "name": "rule-arm score direction matches expected_rule_direction (zero requires all components unchanged)",
+      "status": "pass",
+      "evaluated": 16,
+      "failed_items": []
+    },
+    {
+      "id": "c7_structure_invariance",
+      "name": "single-edit variants leave experience/education/projects/section counts unchanged",
+      "status": "pass",
+      "evaluated": 16,
+      "failed_items": []
+    },
+    {
+      "id": "c6_baseline_headroom",
+      "name": "rq3 edit-subject baselines sit inside the [15, 90] headroom band",
+      "status": "pass",
+      "evaluated": 4,
+      "failed_items": []
+    },
+    {
+      "id": "c8_jd_stability",
+      "name": "extractJobRequirements is deterministic and education flags match the dataset design",
+      "status": "pass",
+      "evaluated": 4,
+      "failed_items": []
+    },
+    {
+      "id": "c9_e4_length_matching",
+      "name": "E4 neutral prose is length-matched to E1 within +/-10% per pair",
+      "status": "pass",
+      "evaluated": 4,
+      "failed_items": []
+    }
+  ],
+  "pairs": [
+    {
+      "pair_id": "P-J1__P-R1",
+      "designed_tier": "High",
+      "rq3_selected": true,
+      "atsScore": 82,
+      "breakdown": {
+        "skillsMatchScore": 80,
+        "experienceScore": 88,
+        "educationScore": 100,
+        "keywordDensityScore": 70
+      },
+      "required_count": 10,
+      "matched_count": 8,
+      "overlap_fraction": 0.8,
+      "matching_skills": [
+        "Java",
+        "REST APIs",
+        "API Integration",
+        "Spring Boot",
+        "SQL",
+        "PostgreSQL",
+        "Docker",
+        "Git"
+      ],
+      "missing_skills": [
+        "Microservices",
+        "Collaboration"
+      ]
+    },
+    {
+      "pair_id": "P-J1__P-R2",
+      "designed_tier": "Low",
+      "rq3_selected": false,
+      "atsScore": 29,
+      "breakdown": {
+        "skillsMatchScore": 10,
+        "experienceScore": 46,
+        "educationScore": 100,
+        "keywordDensityScore": 8
+      },
+      "required_count": 10,
+      "matched_count": 1,
+      "overlap_fraction": 0.1,
+      "matching_skills": [
+        "Git"
+      ],
+      "missing_skills": [
+        "Java",
+        "REST APIs",
+        "API Integration",
+        "Spring Boot",
+        "SQL",
+        "PostgreSQL",
+        "Microservices",
+        "Docker",
+        "Collaboration"
+      ]
+    },
+    {
+      "pair_id": "P-J1__P-R3",
+      "designed_tier": "Low",
+      "rq3_selected": false,
+      "atsScore": 29,
+      "breakdown": {
+        "skillsMatchScore": 10,
+        "experienceScore": 46,
+        "educationScore": 100,
+        "keywordDensityScore": 8
+      },
+      "required_count": 10,
+      "matched_count": 1,
+      "overlap_fraction": 0.1,
+      "matching_skills": [
+        "SQL"
+      ],
+      "missing_skills": [
+        "Java",
+        "REST APIs",
+        "API Integration",
+        "Spring Boot",
+        "PostgreSQL",
+        "Microservices",
+        "Docker",
+        "Collaboration",
+        "Git"
+      ]
+    },
+    {
+      "pair_id": "P-J1__P-R4",
+      "designed_tier": "Mid",
+      "rq3_selected": false,
+      "atsScore": 37,
+      "breakdown": {
+        "skillsMatchScore": 20,
+        "experienceScore": 52,
+        "educationScore": 100,
+        "keywordDensityScore": 16
+      },
+      "required_count": 10,
+      "matched_count": 2,
+      "overlap_fraction": 0.2,
+      "matching_skills": [
+        "Docker",
+        "Git"
+      ],
+      "missing_skills": [
+        "Java",
+        "REST APIs",
+        "API Integration",
+        "Spring Boot",
+        "SQL",
+        "PostgreSQL",
+        "Microservices",
+        "Collaboration"
+      ]
+    },
+    {
+      "pair_id": "P-J2__P-R1",
+      "designed_tier": "Low",
+      "rq3_selected": false,
+      "atsScore": 28,
+      "breakdown": {
+        "skillsMatchScore": 11,
+        "experienceScore": 47,
+        "educationScore": 75,
+        "keywordDensityScore": 9
+      },
+      "required_count": 9,
+      "matched_count": 1,
+      "overlap_fraction": 0.111,
+      "matching_skills": [
+        "Git"
+      ],
+      "missing_skills": [
+        "React",
+        "Responsive Design",
+        "TypeScript",
+        "Accessibility",
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "Redux"
+      ]
+    },
+    {
+      "pair_id": "P-J2__P-R2",
+      "designed_tier": "High",
+      "rq3_selected": true,
+      "atsScore": 87,
+      "breakdown": {
+        "skillsMatchScore": 89,
+        "experienceScore": 93,
+        "educationScore": 75,
+        "keywordDensityScore": 80
+      },
+      "required_count": 9,
+      "matched_count": 8,
+      "overlap_fraction": 0.889,
+      "matching_skills": [
+        "React",
+        "Responsive Design",
+        "TypeScript",
+        "Accessibility",
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "Git"
+      ],
+      "missing_skills": [
+        "Redux"
+      ]
+    },
+    {
+      "pair_id": "P-J2__P-R3",
+      "designed_tier": "Low",
+      "rq3_selected": false,
+      "atsScore": 20,
+      "breakdown": {
+        "skillsMatchScore": 0,
+        "experienceScore": 40,
+        "educationScore": 75,
+        "keywordDensityScore": 0
+      },
+      "required_count": 9,
+      "matched_count": 0,
+      "overlap_fraction": 0,
+      "matching_skills": [],
+      "missing_skills": [
+        "React",
+        "Responsive Design",
+        "TypeScript",
+        "Accessibility",
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "Git",
+        "Redux"
+      ]
+    },
+    {
+      "pair_id": "P-J2__P-R4",
+      "designed_tier": "Low",
+      "rq3_selected": false,
+      "atsScore": 28,
+      "breakdown": {
+        "skillsMatchScore": 11,
+        "experienceScore": 47,
+        "educationScore": 75,
+        "keywordDensityScore": 9
+      },
+      "required_count": 9,
+      "matched_count": 1,
+      "overlap_fraction": 0.111,
+      "matching_skills": [
+        "Git"
+      ],
+      "missing_skills": [
+        "React",
+        "Responsive Design",
+        "TypeScript",
+        "Accessibility",
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "Redux"
+      ]
+    },
+    {
+      "pair_id": "P-J3__P-R1",
+      "designed_tier": "Low",
+      "rq3_selected": false,
+      "atsScore": 38,
+      "breakdown": {
+        "skillsMatchScore": 22,
+        "experienceScore": 53,
+        "educationScore": 100,
+        "keywordDensityScore": 18
+      },
+      "required_count": 9,
+      "matched_count": 2,
+      "overlap_fraction": 0.222,
+      "matching_skills": [
+        "Docker",
+        "SQL"
+      ],
+      "missing_skills": [
+        "Machine Learning",
+        "Python",
+        "scikit-learn",
+        "Deep Learning",
+        "Pandas",
+        "NumPy",
+        "Collaboration"
+      ]
+    },
+    {
+      "pair_id": "P-J3__P-R2",
+      "designed_tier": "Low",
+      "rq3_selected": false,
+      "atsScore": 22,
+      "breakdown": {
+        "skillsMatchScore": 0,
+        "experienceScore": 40,
+        "educationScore": 100,
+        "keywordDensityScore": 0
+      },
+      "required_count": 9,
+      "matched_count": 0,
+      "overlap_fraction": 0,
+      "matching_skills": [],
+      "missing_skills": [
+        "Machine Learning",
+        "Python",
+        "scikit-learn",
+        "Deep Learning",
+        "Pandas",
+        "NumPy",
+        "Docker",
+        "Collaboration",
+        "SQL"
+      ]
+    },
+    {
+      "pair_id": "P-J3__P-R3",
+      "designed_tier": "High",
+      "rq3_selected": true,
+      "atsScore": 73,
+      "breakdown": {
+        "skillsMatchScore": 67,
+        "experienceScore": 80,
+        "educationScore": 100,
+        "keywordDensityScore": 60
+      },
+      "required_count": 9,
+      "matched_count": 6,
+      "overlap_fraction": 0.667,
+      "matching_skills": [
+        "Machine Learning",
+        "Python",
+        "scikit-learn",
+        "Pandas",
+        "NumPy",
+        "SQL"
+      ],
+      "missing_skills": [
+        "Deep Learning",
+        "Docker",
+        "Collaboration"
+      ]
+    },
+    {
+      "pair_id": "P-J3__P-R4",
+      "designed_tier": "Mid",
+      "rq3_selected": false,
+      "atsScore": 30,
+      "breakdown": {
+        "skillsMatchScore": 11,
+        "experienceScore": 47,
+        "educationScore": 100,
+        "keywordDensityScore": 9
+      },
+      "required_count": 9,
+      "matched_count": 1,
+      "overlap_fraction": 0.111,
+      "matching_skills": [
+        "Docker"
+      ],
+      "missing_skills": [
+        "Machine Learning",
+        "Python",
+        "scikit-learn",
+        "Deep Learning",
+        "Pandas",
+        "NumPy",
+        "Collaboration",
+        "SQL"
+      ]
+    },
+    {
+      "pair_id": "P-J4__P-R1",
+      "designed_tier": "Mid",
+      "rq3_selected": false,
+      "atsScore": 36,
+      "breakdown": {
+        "skillsMatchScore": 22,
+        "experienceScore": 53,
+        "educationScore": 75,
+        "keywordDensityScore": 18
+      },
+      "required_count": 9,
+      "matched_count": 2,
+      "overlap_fraction": 0.222,
+      "matching_skills": [
+        "Docker",
+        "Git"
+      ],
+      "missing_skills": [
+        "Terraform",
+        "AWS",
+        "Kubernetes",
+        "CI/CD",
+        "Linux",
+        "Mentoring",
+        "Nginx"
+      ]
+    },
+    {
+      "pair_id": "P-J4__P-R2",
+      "designed_tier": "Low",
+      "rq3_selected": false,
+      "atsScore": 28,
+      "breakdown": {
+        "skillsMatchScore": 11,
+        "experienceScore": 47,
+        "educationScore": 75,
+        "keywordDensityScore": 9
+      },
+      "required_count": 9,
+      "matched_count": 1,
+      "overlap_fraction": 0.111,
+      "matching_skills": [
+        "Git"
+      ],
+      "missing_skills": [
+        "Terraform",
+        "AWS",
+        "Kubernetes",
+        "Docker",
+        "CI/CD",
+        "Linux",
+        "Mentoring",
+        "Nginx"
+      ]
+    },
+    {
+      "pair_id": "P-J4__P-R3",
+      "designed_tier": "Low",
+      "rq3_selected": false,
+      "atsScore": 20,
+      "breakdown": {
+        "skillsMatchScore": 0,
+        "experienceScore": 40,
+        "educationScore": 75,
+        "keywordDensityScore": 0
+      },
+      "required_count": 9,
+      "matched_count": 0,
+      "overlap_fraction": 0,
+      "matching_skills": [],
+      "missing_skills": [
+        "Terraform",
+        "AWS",
+        "Kubernetes",
+        "Docker",
+        "CI/CD",
+        "Linux",
+        "Mentoring",
+        "Git",
+        "Nginx"
+      ]
+    },
+    {
+      "pair_id": "P-J4__P-R4",
+      "designed_tier": "High",
+      "rq3_selected": true,
+      "atsScore": 70,
+      "breakdown": {
+        "skillsMatchScore": 67,
+        "experienceScore": 80,
+        "educationScore": 75,
+        "keywordDensityScore": 60
+      },
+      "required_count": 9,
+      "matched_count": 6,
+      "overlap_fraction": 0.667,
+      "matching_skills": [
+        "AWS",
+        "Kubernetes",
+        "Docker",
+        "CI/CD",
+        "Linux",
+        "Git"
+      ],
+      "missing_skills": [
+        "Terraform",
+        "Mentoring",
+        "Nginx"
+      ]
+    }
+  ],
+  "edits": [
+    {
+      "edit_id": "P-J1__P-R1__E1",
+      "pair_id": "P-J1__P-R1",
+      "edit_type": "E1_relevant_add",
+      "target_skill": "Microservices",
+      "expected_rule_direction": "increase",
+      "baseline_ats": 82,
+      "variant_ats": 90,
+      "delta_ats": 8,
+      "delta_components": {
+        "skillsMatchScore": 10,
+        "experienceScore": 6,
+        "keywordDensityScore": 8,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "+Microservices",
+        "added": [
+          "Microservices"
+        ],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 0,
+        "after": 2,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J1__P-R1__E2",
+      "pair_id": "P-J1__P-R1",
+      "edit_type": "E2_relevant_remove",
+      "target_skill": "SQL",
+      "expected_rule_direction": "decrease",
+      "baseline_ats": 82,
+      "variant_ats": 75,
+      "delta_ats": -7,
+      "delta_components": {
+        "skillsMatchScore": -10,
+        "experienceScore": -6,
+        "keywordDensityScore": -8,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "-SQL",
+        "added": [],
+        "removed": [
+          "SQL"
+        ],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 2,
+        "after": 0,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J1__P-R1__E3",
+      "pair_id": "P-J1__P-R1",
+      "edit_type": "E3_irrelevant_add",
+      "target_skill": "React",
+      "expected_rule_direction": "zero",
+      "baseline_ats": 82,
+      "variant_ats": 82,
+      "delta_ats": 0,
+      "delta_components": {
+        "skillsMatchScore": 0,
+        "experienceScore": 0,
+        "keywordDensityScore": 0,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "+React",
+        "added": [
+          "React"
+        ],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 0,
+        "after": 1,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J1__P-R1__E4",
+      "pair_id": "P-J1__P-R1",
+      "edit_type": "E4_irrelevant_prose",
+      "target_skill": null,
+      "expected_rule_direction": "zero",
+      "baseline_ats": 82,
+      "variant_ats": 82,
+      "delta_ats": 0,
+      "delta_components": {
+        "skillsMatchScore": 0,
+        "experienceScore": 0,
+        "keywordDensityScore": 0,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "none",
+        "added": [],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": null,
+        "after": null,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J2__P-R2__E1",
+      "pair_id": "P-J2__P-R2",
+      "edit_type": "E1_relevant_add",
+      "target_skill": "Redux",
+      "expected_rule_direction": "increase",
+      "baseline_ats": 87,
+      "variant_ats": 95,
+      "delta_ats": 8,
+      "delta_components": {
+        "skillsMatchScore": 11,
+        "experienceScore": 7,
+        "keywordDensityScore": 9,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "+Redux",
+        "added": [
+          "Redux"
+        ],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 0,
+        "after": 2,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J2__P-R2__E2",
+      "pair_id": "P-J2__P-R2",
+      "edit_type": "E2_relevant_remove",
+      "target_skill": "CSS",
+      "expected_rule_direction": "decrease",
+      "baseline_ats": 87,
+      "variant_ats": 79,
+      "delta_ats": -8,
+      "delta_components": {
+        "skillsMatchScore": -11,
+        "experienceScore": -6,
+        "keywordDensityScore": -11,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "-CSS",
+        "added": [],
+        "removed": [
+          "CSS"
+        ],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 3,
+        "after": 0,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J2__P-R2__E3",
+      "pair_id": "P-J2__P-R2",
+      "edit_type": "E3_irrelevant_add",
+      "target_skill": "GraphQL",
+      "expected_rule_direction": "zero",
+      "baseline_ats": 87,
+      "variant_ats": 87,
+      "delta_ats": 0,
+      "delta_components": {
+        "skillsMatchScore": 0,
+        "experienceScore": 0,
+        "keywordDensityScore": 0,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "+GraphQL",
+        "added": [
+          "GraphQL"
+        ],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 0,
+        "after": 1,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J2__P-R2__E4",
+      "pair_id": "P-J2__P-R2",
+      "edit_type": "E4_irrelevant_prose",
+      "target_skill": null,
+      "expected_rule_direction": "zero",
+      "baseline_ats": 87,
+      "variant_ats": 87,
+      "delta_ats": 0,
+      "delta_components": {
+        "skillsMatchScore": 0,
+        "experienceScore": 0,
+        "keywordDensityScore": 0,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "none",
+        "added": [],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": null,
+        "after": null,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J3__P-R3__E1",
+      "pair_id": "P-J3__P-R3",
+      "edit_type": "E1_relevant_add",
+      "target_skill": "Docker",
+      "expected_rule_direction": "increase",
+      "baseline_ats": 73,
+      "variant_ats": 81,
+      "delta_ats": 8,
+      "delta_components": {
+        "skillsMatchScore": 11,
+        "experienceScore": 7,
+        "keywordDensityScore": 9,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "+Docker",
+        "added": [
+          "Docker"
+        ],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 0,
+        "after": 2,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J3__P-R3__E2",
+      "pair_id": "P-J3__P-R3",
+      "edit_type": "E2_relevant_remove",
+      "target_skill": "SQL",
+      "expected_rule_direction": "decrease",
+      "baseline_ats": 73,
+      "variant_ats": 65,
+      "delta_ats": -8,
+      "delta_components": {
+        "skillsMatchScore": -11,
+        "experienceScore": -7,
+        "keywordDensityScore": -9,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "-SQL",
+        "added": [],
+        "removed": [
+          "SQL"
+        ],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 2,
+        "after": 0,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J3__P-R3__E3",
+      "pair_id": "P-J3__P-R3",
+      "edit_type": "E3_irrelevant_add",
+      "target_skill": "Kubernetes",
+      "expected_rule_direction": "zero",
+      "baseline_ats": 73,
+      "variant_ats": 73,
+      "delta_ats": 0,
+      "delta_components": {
+        "skillsMatchScore": 0,
+        "experienceScore": 0,
+        "keywordDensityScore": 0,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "+Kubernetes",
+        "added": [
+          "Kubernetes"
+        ],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 0,
+        "after": 1,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J3__P-R3__E4",
+      "pair_id": "P-J3__P-R3",
+      "edit_type": "E4_irrelevant_prose",
+      "target_skill": null,
+      "expected_rule_direction": "zero",
+      "baseline_ats": 73,
+      "variant_ats": 73,
+      "delta_ats": 0,
+      "delta_components": {
+        "skillsMatchScore": 0,
+        "experienceScore": 0,
+        "keywordDensityScore": 0,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "none",
+        "added": [],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": null,
+        "after": null,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J4__P-R4__E1",
+      "pair_id": "P-J4__P-R4",
+      "edit_type": "E1_relevant_add",
+      "target_skill": "Nginx",
+      "expected_rule_direction": "increase",
+      "baseline_ats": 70,
+      "variant_ats": 79,
+      "delta_ats": 9,
+      "delta_components": {
+        "skillsMatchScore": 11,
+        "experienceScore": 7,
+        "keywordDensityScore": 9,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "+Nginx",
+        "added": [
+          "Nginx"
+        ],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 0,
+        "after": 2,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J4__P-R4__E2",
+      "pair_id": "P-J4__P-R4",
+      "edit_type": "E2_relevant_remove",
+      "target_skill": "Linux",
+      "expected_rule_direction": "decrease",
+      "baseline_ats": 70,
+      "variant_ats": 62,
+      "delta_ats": -8,
+      "delta_components": {
+        "skillsMatchScore": -11,
+        "experienceScore": -7,
+        "keywordDensityScore": -9,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "-Linux",
+        "added": [],
+        "removed": [
+          "Linux"
+        ],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 2,
+        "after": 0,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J4__P-R4__E3",
+      "pair_id": "P-J4__P-R4",
+      "edit_type": "E3_irrelevant_add",
+      "target_skill": "GraphQL",
+      "expected_rule_direction": "zero",
+      "baseline_ats": 70,
+      "variant_ats": 70,
+      "delta_ats": 0,
+      "delta_components": {
+        "skillsMatchScore": 0,
+        "experienceScore": 0,
+        "keywordDensityScore": 0,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "+GraphQL",
+        "added": [
+          "GraphQL"
+        ],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": 0,
+        "after": 1,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    },
+    {
+      "edit_id": "P-J4__P-R4__E4",
+      "pair_id": "P-J4__P-R4",
+      "edit_type": "E4_irrelevant_prose",
+      "target_skill": null,
+      "expected_rule_direction": "zero",
+      "baseline_ats": 70,
+      "variant_ats": 70,
+      "delta_ats": 0,
+      "delta_components": {
+        "skillsMatchScore": 0,
+        "experienceScore": 0,
+        "keywordDensityScore": 0,
+        "educationScore": 0
+      },
+      "direction_check": true,
+      "scan_diff": {
+        "expected": "none",
+        "added": [],
+        "removed": [],
+        "ok": true
+      },
+      "keyword_counts": {
+        "before": null,
+        "after": null,
+        "ok": true
+      },
+      "structure_counts": {
+        "experience": [
+          2,
+          2
+        ],
+        "education": [
+          1,
+          1
+        ],
+        "projects": [
+          1,
+          1
+        ],
+        "sections": [
+          5,
+          5
+        ]
+      },
+      "structure_ok": true
+    }
+  ],
+  "designed_tier_ordering": {
+    "informational": true,
+    "rows": [
+      {
+        "designed_tier": "High",
+        "n": 4,
+        "overlap_fractions": [
+          0.8,
+          0.889,
+          0.667,
+          0.667
+        ],
+        "ats_scores": [
+          82,
+          87,
+          73,
+          70
+        ]
+      },
+      {
+        "designed_tier": "Mid",
+        "n": 3,
+        "overlap_fractions": [
+          0.2,
+          0.111,
+          0.222
+        ],
+        "ats_scores": [
+          37,
+          30,
+          36
+        ]
+      },
+      {
+        "designed_tier": "Low",
+        "n": 9,
+        "overlap_fractions": [
+          0.1,
+          0.1,
+          0.111,
+          0,
+          0.111,
+          0.222,
+          0,
+          0.111,
+          0
+        ],
+        "ats_scores": [
+          29,
+          29,
+          28,
+          20,
+          28,
+          38,
+          22,
+          28,
+          20
+        ]
+      }
+    ],
+    "min_high_overlap": 0.667,
+    "max_low_overlap": 0.222,
+    "separation_ok": true,
+    "note": "Descriptive only: designed tiers are authoring intent, not verified labels; separation is reported, never asserted as ground truth."
+  },
+  "e4_length_matching": [
+    {
+      "pair_id": "P-J1__P-R1",
+      "added_chars_e1": 78,
+      "added_chars_e4": 75,
+      "ratio_e4_over_e1": 0.962,
+      "within_10pct": true
+    },
+    {
+      "pair_id": "P-J2__P-R2",
+      "added_chars_e1": 76,
+      "added_chars_e4": 71,
+      "ratio_e4_over_e1": 0.934,
+      "within_10pct": true
+    },
+    {
+      "pair_id": "P-J3__P-R3",
+      "added_chars_e1": 72,
+      "added_chars_e4": 67,
+      "ratio_e4_over_e1": 0.931,
+      "within_10pct": true
+    },
+    {
+      "pair_id": "P-J4__P-R4",
+      "added_chars_e1": 65,
+      "added_chars_e4": 67,
+      "ratio_e4_over_e1": 1.031,
+      "within_10pct": true
+    }
+  ],
+  "summary": {
+    "all_pass": true,
+    "checks_total": 12,
+    "checks_passed": 12,
+    "checks_failed": 0,
+    "failures": [],
+    "pairs_evaluated": 16,
+    "edits_evaluated": 16,
+    "rq3_headroom": [
+      {
+        "pair_id": "P-J1__P-R1",
+        "atsScore": 82,
+        "in_range": true
+      },
+      {
+        "pair_id": "P-J2__P-R2",
+        "atsScore": 87,
+        "in_range": true
+      },
+      {
+        "pair_id": "P-J3__P-R3",
+        "atsScore": 73,
+        "in_range": true
+      },
+      {
+        "pair_id": "P-J4__P-R4",
+        "atsScore": 70,
+        "in_range": true
+      }
+    ],
+    "baseline_ats_scores": [
+      {
+        "pair_id": "P-J1__P-R1",
+        "atsScore": 82
+      },
+      {
+        "pair_id": "P-J1__P-R2",
+        "atsScore": 29
+      },
+      {
+        "pair_id": "P-J1__P-R3",
+        "atsScore": 29
+      },
+      {
+        "pair_id": "P-J1__P-R4",
+        "atsScore": 37
+      },
+      {
+        "pair_id": "P-J2__P-R1",
+        "atsScore": 28
+      },
+      {
+        "pair_id": "P-J2__P-R2",
+        "atsScore": 87
+      },
+      {
+        "pair_id": "P-J2__P-R3",
+        "atsScore": 20
+      },
+      {
+        "pair_id": "P-J2__P-R4",
+        "atsScore": 28
+      },
+      {
+        "pair_id": "P-J3__P-R1",
+        "atsScore": 38
+      },
+      {
+        "pair_id": "P-J3__P-R2",
+        "atsScore": 22
+      },
+      {
+        "pair_id": "P-J3__P-R3",
+        "atsScore": 73
+      },
+      {
+        "pair_id": "P-J3__P-R4",
+        "atsScore": 30
+      },
+      {
+        "pair_id": "P-J4__P-R1",
+        "atsScore": 36
+      },
+      {
+        "pair_id": "P-J4__P-R2",
+        "atsScore": 28
+      },
+      {
+        "pair_id": "P-J4__P-R3",
+        "atsScore": 20
+      },
+      {
+        "pair_id": "P-J4__P-R4",
+        "atsScore": 70
+      }
+    ]
+  }
+}

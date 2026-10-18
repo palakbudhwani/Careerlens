@@ -15,8 +15,17 @@ const ANSWER_CLIP = 6000;
 // Task-specific completion-token budgets, sized from each response schema so
 // no call requests the full 4096-token allowance. Question budget scales with
 // the requested question count. All values are clamped by the provider layer.
+//
+// match_analysis needs real headroom: the match schema is the largest one
+// (summary + gaps + keyword table), and on reasoning/thinking models the
+// hidden reasoning tokens share the same budget as the document (Groq gpt-oss
+// counts them against max_completion_tokens; Gemini counts them against
+// maxOutputTokens). At 2000 the strict Groq output was truncated mid-document
+// ("missing required content"). 3000 covers the worst-case document (roughly
+// 1300-1700 tokens) plus low-effort reasoning while staying close to the
+// previous request size against providers' tokens-per-minute limits.
 const TOKEN_LIMITS = {
-  match_analysis: 2000,
+  match_analysis: 3000,
   answer_evaluation: 800,
   interviewQuestions: (count) => 400 + 320 * count
 };

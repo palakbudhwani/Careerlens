@@ -7,14 +7,18 @@ const GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b';
 const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
 const REQUEST_TIMEOUT_MS = 60_000;
-// Per-attempt budget for the PRIMARY provider. The primary gets a much tighter
-// deadline than the fallback: a stalled primary must hand over to the fallback
-// after PRIMARY_TIMEOUT_MS instead of consuming the whole 60s budget before
-// the fallback ever gets its turn. The fallback keeps REQUEST_TIMEOUT_MS so a
-// slow-but-valid answer is still allowed to finish. Worst case chain is
-// PRIMARY_TIMEOUT_MS + backoff + REQUEST_TIMEOUT_MS (~81s), well inside the
-// frontend's own request deadline.
-const PRIMARY_TIMEOUT_MS = 20_000;
+// Per-attempt budget for the PRIMARY provider. The primary must hand over to
+// the fallback after PRIMARY_TIMEOUT_MS instead of consuming the whole 60s
+// budget before the fallback ever gets its turn — but the budget must also be
+// large enough for a genuine structured match analysis. 20s proved too tight
+// for thinking-class flash models on large prompts: @google/genai forwards
+// this value to Gemini as an `X-Server-Timeout` header (seconds, rounded up),
+// so a too-small value makes Google itself abort with HTTP 504
+// DEADLINE_EXCEEDED before the model can answer. The fallback keeps
+// REQUEST_TIMEOUT_MS so a slow-but-valid answer is still allowed to finish.
+// Worst case chain is PRIMARY_TIMEOUT_MS + max backoff + REQUEST_TIMEOUT_MS
+// (~106.5s), still inside the frontend's own 130s request deadline.
+const PRIMARY_TIMEOUT_MS = 45_000;
 const DEFAULT_MAX_COMPLETION_TOKENS = 4096;
 const MIN_MAX_COMPLETION_TOKENS = 256;
 const PROVIDER_DETAIL_LIMIT = 160;
@@ -242,6 +246,22 @@ function mapNetworkError(error, label, timeoutMs = REQUEST_TIMEOUT_MS) {
     `Could not reach the ${label} AI provider (network error). Check connectivity and try again.${message ? ` ${truncateDetail(message)}` : ''}`,
     { statusCode: 502, code: 'AI_UNREACHABLE' }
     );
+}
+
+// Structured output can end early when the provider's output budget runs out.
+// Groq surfaces that as an HTTP 400 `json_validate_failed` whose message says
+// the document was truncated by max_completion_tokens; other providers (and
+// Groq's non-strict json_object mode) return HTTP 200 with
+// `finish_reason: "length"`. A truncated document is never a valid analysis,
+// so it gets its own eligible code instead of being parsed as if complete.
+const TRUNCATION_DETAIL_PATTERN = /max completion tokens|output was truncated|truncated to fit|json_validate_failed|missing required content/i;
+
+function truncatedOutputError(label, detail = '') {
+  const suffix = detail ? ` Provider message: ${detail}` : '';
+  return new AiProviderError(
+    `The ${label} AI provider ran out of output space before the analysis was complete, so the incomplete result was discarded. Try again.${suffix}`,
+    { statusCode: 502, code: 'AI_OUTPUT_TRUNCATED' }
+  );
 }
 
 /**
@@ -538,6 +558,14 @@ async function callGroq({ prompt, systemInstruction, schema, schemaName, tempera
         }
       : { type: 'json_object' }
   };
+  // gpt-oss models are reasoning models: their hidden reasoning tokens count
+  // against max_completion_tokens (Groq docs), which is what caused the strict
+  // output to be truncated while a valid document was still missing required
+  // content. Low effort keeps reasoning short so the required JSON fits inside
+  // the task budget. Only sent for model families known to accept the field.
+  if (/^openai\/gpt-oss-/.test(model)) {
+    body.reasoning_effort = 'low';
+  }
 
   let response;
   try {
@@ -557,6 +585,9 @@ async function callGroq({ prompt, systemInstruction, schema, schemaName, tempera
   if (!response.ok) {
     const retryHint = response.status === 429 ? parseRetryHint(response) : null;
     const detail = await readProviderDetail(response);
+    if (response.status === 400 && TRUNCATION_DETAIL_PATTERN.test(detail)) {
+      throw truncatedOutputError('Groq', detail);
+    }
     throw mapHttpError(response.status, detail, 'Groq', retryHint);
   }
 
@@ -569,7 +600,13 @@ async function callGroq({ prompt, systemInstruction, schema, schemaName, tempera
       code: 'AI_INVALID_JSON'
     });
   }
-  return parseJsonContent(payload?.choices?.[0]?.message?.content);
+  const choice = payload?.choices?.[0];
+  if (choice?.finish_reason === 'length') {
+    // HTTP 200 but the document was cut off by the token budget — never treat
+    // a truncated response as a successful analysis.
+    throw truncatedOutputError('Groq');
+  }
+  return parseJsonContent(choice?.message?.content);
 }
 
 function getGeminiClient() {
@@ -610,6 +647,13 @@ async function callGemini({ prompt, systemInstruction, schema, temperature, maxC
   } catch (error) {
     throw mapGeminiError(error);
   }
+  // maxOutputTokens covers thinking tokens plus the JSON document on thinking
+  // models. If the budget ran out, the document is incomplete — discard it
+  // instead of parsing a fragment as if it were the analysis.
+  const finishReason = response?.candidates?.[0]?.finishReason;
+  if (typeof finishReason === 'string' && /MAX_TOKENS/i.test(finishReason)) {
+    throw truncatedOutputError('Gemini');
+  }
   return parseJsonContent(response?.text);
 }
 
@@ -631,7 +675,8 @@ const ELIGIBLE_FALLBACK_CODES = new Set([
   'AI_UNREACHABLE',
   'AI_INVALID_JSON',
   'AI_EMPTY_RESPONSE',
-  'AI_SCHEMA_MISMATCH'
+  'AI_SCHEMA_MISMATCH',
+  'AI_OUTPUT_TRUNCATED'
 ]);
 
 /**

@@ -47,5 +47,6 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Local Claude Code settings
 .claude/
-research/

@@ -1,0 +1,1173 @@
+{
+  "label": "CODE-LEVEL ANALYSIS TEST RUN — not research results, no model/provider involved.",
+  "script": "research/scripts/run_analysis_tests.mjs",
+  "core": "research/scripts/analysis_core.mjs",
+  "fixture": "research/test-fixtures/analysis_fixture_v1.json (SYNTHETIC)",
+  "run_at": "2026-10-12T21:00:54.558Z",
+  "node": "v24.19.0",
+  "seed": 20261013,
+  "groups": [
+    "G1_fixture_hygiene",
+    "G2_rq1_primary_metrics",
+    "G3_rq1_validation_missingness",
+    "G4_rq2_repeatability",
+    "G5_rq3_deltas_and_missing_cells",
+    "G6_exact_sign_test",
+    "G7_holm_step_down",
+    "G8_clopper_pearson",
+    "G9_correlation_guards",
+    "G10_bootstrap"
+  ],
+  "checks_total": 191,
+  "checks_passed": 191,
+  "checks_failed": 0,
+  "failures": [],
+  "results": [
+    {
+      "group": "G1_fixture_hygiene",
+      "name": "fixture carries SYNTHETIC label",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G1_fixture_hygiene",
+      "name": "fixture states NOT research results",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G1_fixture_hygiene",
+      "name": "fixture seed matches protocol",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "status ok",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "n = 6",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "MAE",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "MedAD",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "bias",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "SD_d",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "LoA lower",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "LoA upper",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "P(|d|<=5) %",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "P(|d|<=10) %",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "Pearson r",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "Spearman rho (exact 1.0)",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "Fisher-z half-width",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "Fisher label = frozen wording",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G2_rq1_primary_metrics",
+      "name": "no exclusions on clean panel",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "status ok",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "primary n = 2 (complete-case)",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "primary MAE",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "primary bias",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "excluded fx-v3 = no_valid_ai_runs",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "excluded fx-v4 = invalid_rule_score",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "excluded fx-v5 = no_valid_ai_runs",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "excluded fx-v6 = invalid_rule_score",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "excluded count = 4",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "suspected default fills counted (v2: 1)",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "invalid runs counted (v1: 150)",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "sensitivity includeSuspected n",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "sensitivity includeSuspected MAE",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "sensitivity includeSuspected bias",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G3_rq1_validation_missingness",
+      "name": "empty input -> insufficient",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "status ok",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "valid items = 3",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-ra k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-ra mean",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-ra sd",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-ra range",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-ra identical flag",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rb k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rb mean",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rb sd",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rb range",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rb identical flag",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rc k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rc mean",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rc sd",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rc range",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "fx-rc identical flag",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "pooled s_w = sqrt(2)",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "pooled df = 5",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "median range = 2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "% identical = 33.333333",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "excluded fx-rd = fewer_than_2_valid_runs",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G4_rq2_repeatability",
+      "name": "excluded fx-re = fewer_than_2_valid_runs",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "ok cells = 4",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "missing cells = 3",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p1 status = ok",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p1 delta",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p2 status = ok",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p2 delta",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p3 status = ok",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p3 delta",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p4 status = missing_cell",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p4 reason = fewer_than_2_valid_edited_runs",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p4 delta is null",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p5 status = ok",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p5 delta",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p6 status = missing_cell",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p6 reason = fewer_than_2_valid_edited_runs",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p6 delta is null",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p7 status = missing_cell",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p7 reason = no_valid_baseline_runs",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "fx-p7 delta is null",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary median",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary q1",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary q3",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary iqr",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary positives",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary negatives",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary zeros",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary sign p",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary sign n'",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary % within ±5",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G5_rq3_deltas_and_missing_cells",
+      "name": "summary CP interval present",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 10/12: status",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 10/12: n'",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 10/12: k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 10/12: p",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 11/12: status",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 11/12: n'",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 11/12: k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 11/12: p",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 12/12: status",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 12/12: n'",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 12/12: k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=12 published 12/12: p",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=7 split 4/3 -> p=1: status",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=7 split 4/3 -> p=1: n'",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=7 split 4/3 -> p=1: k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=7 split 4/3 -> p=1: p",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=5 unanimous -> p=0.0625: status",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=5 unanimous -> p=0.0625: n'",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=5 unanimous -> p=0.0625: k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=5 unanimous -> p=0.0625: p",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=10 9/10 -> p=0.021484 (computed; see ANALYSIS_SCRIPTS_NOTE doc-discrepancy note): status",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=10 9/10 -> p=0.021484 (computed; see ANALYSIS_SCRIPTS_NOTE doc-discrepancy note): n'",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=10 9/10 -> p=0.021484 (computed; see ANALYSIS_SCRIPTS_NOTE doc-discrepancy note): k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=10 9/10 -> p=0.021484 (computed; see ANALYSIS_SCRIPTS_NOTE doc-discrepancy note): p",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "all zeros -> no_nonzero: status",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "all zeros -> no_nonzero: n'",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "all zeros -> no_nonzero: p null",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=2 tie -> p=1 capped: status",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=2 tie -> p=1 capped: n'",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=2 tie -> p=1 capped: k",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G6_exact_sign_test",
+      "name": "n'=2 tie -> p=1 capped: p",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125): first-step threshold",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125): adjusted[0]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125): adjusted[1]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125): adjusted[2]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125): adjusted[3]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125): rejected[0]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125): rejected[1]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125): rejected[2]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125): rejected[3]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-B 2-test family (first step 0.025): first-step threshold",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-B 2-test family (first step 0.025): adjusted[0]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-B 2-test family (first step 0.025): adjusted[1]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-B 2-test family (first step 0.025): rejected[0]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G7_holm_step_down",
+      "name": "Tier-B 2-test family (first step 0.025): rejected[1]",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=n=4: lower",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=n=4: upper",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=n=4: ordering 0 <= lower <= upper <= 1",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=0,n=4: lower",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=0,n=4: upper",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=0,n=4: ordering 0 <= lower <= upper <= 1",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=0,n=1: lower",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=0,n=1: upper",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=0,n=1: ordering 0 <= lower <= upper <= 1",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=3,n=4 containment of phat: interval contains phat",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G8_clopper_pearson",
+      "name": "k=3,n=4 containment of phat: ordering 0 <= lower <= upper <= 1",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "Spearman with tie = hand value",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "constant input -> pearson null",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "n<4 -> fisher null",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "classifyScore: 0 suspected",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "classifyScore: 101 invalid",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "classifyScore: 70.5 invalid",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "classifyScore: 50 valid",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "classifyRuleScore: 0 valid (clamp value)",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "splitRuns valid=2 suspected=1 invalid=2",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "mean hand check",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "median even count",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "sampleSD hand check",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G9_correlation_guards",
+      "name": "quantile7 type-7 hand check",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "status ok",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "label contains \"indicative\"",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "label equals frozen wording",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "few-cluster warning present",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "resume clusters = 3",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "job clusters = 4",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "seed recorded",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "iters honored",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "deterministic under same seed",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI ordering for mae",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI has finite point for mae",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI used <= iters for mae",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI point estimate matches base metric for mae",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI ordering for medad",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI has finite point for medad",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI used <= iters for medad",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI point estimate matches base metric for medad",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI ordering for bias",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI has finite point for bias",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI used <= iters for bias",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI point estimate matches base metric for bias",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI ordering for pct_within_5",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI has finite point for pct_within_5",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI used <= iters for pct_within_5",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI point estimate matches base metric for pct_within_5",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI ordering for pct_within_10",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI has finite point for pct_within_10",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI used <= iters for pct_within_10",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI point estimate matches base metric for pct_within_10",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI ordering for spearman_rho",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI has finite point for spearman_rho",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI used <= iters for spearman_rho",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "CI point estimate matches base metric for spearman_rho",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "rq2 bootstrap status ok",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "rq2 pooled_sw point = base",
+      "status": "pass",
+      "detail": ""
+    },
+    {
+      "group": "G10_bootstrap",
+      "name": "rq2 bootstrap deterministic",
+      "status": "pass",
+      "detail": ""
+    }
+  ]
+}

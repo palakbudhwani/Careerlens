@@ -1,0 +1,160 @@
+{
+  "label": "SYNTHETIC TEST FIXTURE v1 — code-level validation data ONLY. NOT research results, NOT pilot output, NOT benchmark data, NOT generated from any model. Never cite in the manuscript. Used only by research/scripts/run_analysis_tests.mjs.",
+  "created": "2026-10-13",
+  "seed": 20261013,
+  "expected_value_sources": "Hand-computed from RESEARCH_PROTOCOL.md §7 formulas; sign-test expectations include the protocol-published §5.3 values (10/12, 11/12, 12/12).",
+  "agreement_panel": {
+    "rows": [
+      { "pair_id": "fx-p1", "resume_id": "fx-r1", "job_id": "fx-j1", "ai_runs": [70, 72], "rule_score": 70 },
+      { "pair_id": "fx-p2", "resume_id": "fx-r2", "job_id": "fx-j2", "ai_runs": [64, 66], "rule_score": 65 },
+      { "pair_id": "fx-p3", "resume_id": "fx-r3", "job_id": "fx-j3", "ai_runs": [80, 84], "rule_score": 76 },
+      { "pair_id": "fx-p4", "resume_id": "fx-r1", "job_id": "fx-j4", "ai_runs": [54, 56], "rule_score": 60 },
+      { "pair_id": "fx-p5", "resume_id": "fx-r2", "job_id": "fx-j3", "ai_runs": [90, 88], "rule_score": 84 },
+      { "pair_id": "fx-p6", "resume_id": "fx-r3", "job_id": "fx-j1", "ai_runs": [40, 44], "rule_score": 44 }
+    ],
+    "expected": {
+      "n": 6,
+      "mae": 3.166667,
+      "medad": 3.5,
+      "bias": 0.833333,
+      "sd_d": 4.167333,
+      "loa_lower": -7.33464,
+      "loa_upper": 9.001307,
+      "pct_within_5": 83.333333,
+      "pct_within_10": 100.0,
+      "pearson_r": 0.988637,
+      "spearman_rho": 1.0,
+      "fisher_z_half_width": 1.131607
+    },
+    "hand_derivation_note": "differences = [+1, 0, +6, -5, +5, -2]; mean diff = 5/6; |diffs| sorted = [0,1,2,5,5,6] -> MedAD = 3.5; MAE = 19/6; sample sd of diffs = sqrt(3126/180); AI means = [71,65,82,55,89,42] (sum 404), rule = [70,65,76,60,84,44] (sum 399); Pearson = 1185/sqrt((4492/3)*(1919/2)); rank vectors identical -> Spearman = 1.0; Fisher-z half-width = 1.96/sqrt(6-3)."
+  },
+  "repeatability": {
+    "items": [
+      { "item_id": "fx-ra", "resume_id": "fx-r1", "job_id": "fx-j1", "runs": [70, 72, 71] },
+      { "item_id": "fx-rb", "resume_id": "fx-r1", "job_id": "fx-j2", "runs": [65, 65, 65] },
+      { "item_id": "fx-rc", "resume_id": "fx-r2", "job_id": "fx-j3", "runs": [80, 84] },
+      { "item_id": "fx-rd", "resume_id": "fx-r2", "job_id": "fx-j4", "runs": [50] },
+      { "item_id": "fx-re", "resume_id": "fx-r3", "job_id": "fx-j1", "runs": [40, "x", 150] }
+    ],
+    "expected": {
+      "valid_items": 3,
+      "fx-ra": { "k": 3, "mean": 71, "sd": 1.0, "range": 2, "identical": false },
+      "fx-rb": { "k": 3, "mean": 65, "sd": 0.0, "range": 0, "identical": true },
+      "fx-rc": { "k": 2, "mean": 82, "sd": 2.828427, "range": 4, "identical": false },
+      "excluded": { "fx-rd": "fewer_than_2_valid_runs", "fx-re": "fewer_than_2_valid_runs" },
+      "pooled_sw": 1.4142135623730951,
+      "pooled_df": 5,
+      "median_range": 2,
+      "pct_identical": 33.333333,
+      "hand_derivation_note": "sum of squared deviations = 2 (fx-ra) + 0 (fx-rb) + 8 (fx-rc) = 10; df = 2+2+1 = 5; s_w = sqrt(10/5) = sqrt(2); ranges = [2,0,4] -> median 2; identical = 1 of 3."
+    }
+  },
+  "edits": {
+    "cells": [
+      { "pair_id": "fx-p1", "edit_type": "E1", "baseline_runs": [70, 72], "edited_runs": [77, 79] },
+      { "pair_id": "fx-p2", "edit_type": "E2", "baseline_runs": [70, 70], "edited_runs": [64, 66] },
+      { "pair_id": "fx-p3", "edit_type": "E3", "baseline_runs": [80, 82], "edited_runs": [81, 81] },
+      { "pair_id": "fx-p4", "edit_type": "E4", "baseline_runs": [60, 60], "edited_runs": [50] },
+      { "pair_id": "fx-p5", "edit_type": "E1", "baseline_runs": [60], "edited_runs": [61, 63] },
+      { "pair_id": "fx-p6", "edit_type": "E3", "baseline_runs": [70, 70], "edited_runs": [200, "x"] },
+      { "pair_id": "fx-p7", "edit_type": "E2", "baseline_runs": [], "edited_runs": [65, 65] }
+    ],
+    "expected": {
+      "ok_cells": 4,
+      "fx-p1": { "status": "ok", "delta": 7 },
+      "fx-p2": { "status": "ok", "delta": -5 },
+      "fx-p3": { "status": "ok", "delta": 0 },
+      "fx-p4": { "status": "missing_cell", "reason": "fewer_than_2_valid_edited_runs" },
+      "fx-p5": { "status": "ok", "delta": 2 },
+      "fx-p6": { "status": "missing_cell", "reason": "fewer_than_2_valid_edited_runs" },
+      "fx-p7": { "status": "missing_cell", "reason": "no_valid_baseline_runs" },
+      "summary_over_ok_deltas": {
+        "deltas": [7, -5, 0, 2],
+        "median": 1,
+        "q1": -1.25,
+        "q3": 3.25,
+        "iqr": 4.5,
+        "positives": 2,
+        "negatives": 1,
+        "zeros": 1,
+        "sign_test_p": 1.0,
+        "sign_test_n_prime": 3,
+        "pct_within_5": 75
+      }
+    }
+  },
+  "sign_tests": [
+    { "name": "n'=12 published 10/12", "deltas": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1, -1], "expected_n_prime": 12, "expected_k": 10, "expected_p": 0.03857421875 },
+    { "name": "n'=12 published 11/12", "deltas": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, -1], "expected_n_prime": 12, "expected_k": 11, "expected_p": 0.00634765625 },
+    { "name": "n'=12 published 12/12", "deltas": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "expected_n_prime": 12, "expected_k": 12, "expected_p": 0.00048828125 },
+    { "name": "n'=7 split 4/3 -> p=1", "deltas": [2, -3, 4, 1, -1, 5, -2], "expected_n_prime": 7, "expected_k": 4, "expected_p": 1.0 },
+    { "name": "n'=5 unanimous -> p=0.0625", "deltas": [1, 1, 1, 1, 1], "expected_n_prime": 5, "expected_k": 5, "expected_p": 0.0625 },
+    { "name": "n'=10 9/10 -> p=0.021484 (computed; see ANALYSIS_SCRIPTS_NOTE doc-discrepancy note)", "deltas": [1, 1, 1, 1, 1, 1, 1, 1, 1, -1], "expected_n_prime": 10, "expected_k": 9, "expected_p": 0.021484375 },
+    { "name": "all zeros -> no_nonzero", "deltas": [0, 0], "expected_n_prime": 0, "expected_k": null, "expected_p": null, "expected_status": "no_nonzero" },
+    { "name": "n'=2 tie -> p=1 capped", "deltas": [7, -5], "expected_n_prime": 2, "expected_k": 1, "expected_p": 1.0 }
+  ],
+  "holm": [
+    {
+      "name": "Tier-A family of 4 (protocol §5.3 first step 0.0125)",
+      "p_values": [0.004, 0.011, 0.032, 0.048],
+      "alpha": 0.05,
+      "expected_first_step_threshold": 0.0125,
+      "expected_adjusted": [0.016, 0.033, 0.064, 0.064],
+      "expected_rejected": [true, true, false, false]
+    },
+    {
+      "name": "Tier-B 2-test family (first step 0.025)",
+      "p_values": [0.02, 0.3],
+      "alpha": 0.05,
+      "expected_first_step_threshold": 0.025,
+      "expected_adjusted": [0.04, 0.3],
+      "expected_rejected": [true, false]
+    }
+  ],
+  "clopper_pearson": [
+    { "name": "k=n=4", "k": 4, "n": 4, "expected_lower": 0.397635364, "expected_upper": 1.0 },
+    { "name": "k=0,n=4", "k": 0, "n": 4, "expected_lower": 0.0, "expected_upper": 0.602364636 },
+    { "name": "k=0,n=1", "k": 0, "n": 1, "expected_lower": 0.0, "expected_upper": 0.975 },
+    { "name": "k=3,n=4 containment of phat", "k": 3, "n": 4, "expect_contains_phat": 0.75 }
+  ],
+  "correlations": {
+    "spearman_ties": { "x": [1, 2, 2, 3], "y": [1, 4, 2, 3], "expected_rho": 0.6324555, "hand_derivation": "x ranks [1,2.5,2.5,4] (tie), y ranks [1,4,2,3]; Pearson on ranks = 3/sqrt(22.5) = sqrt(0.4)." },
+    "guards": [
+      { "name": "constant input -> pearson null", "x": [5, 5, 5], "y": [1, 2, 3], "expect": "pearson_null" },
+      { "name": "n<4 -> fisher null", "r": 0.9, "n": 3, "expect": "fisher_null" }
+    ]
+  },
+  "rq1_validation": {
+    "rows": [
+      { "pair_id": "fx-v1", "resume_id": "fx-r1", "job_id": "fx-j1", "ai_runs": [70, 150], "rule_score": 70 },
+      { "pair_id": "fx-v2", "resume_id": "fx-r1", "job_id": "fx-j2", "ai_runs": [0, 70], "rule_score": 65 },
+      { "pair_id": "fx-v3", "resume_id": "fx-r2", "job_id": "fx-j3", "ai_runs": [70.5], "rule_score": 70 },
+      { "pair_id": "fx-v4", "resume_id": "fx-r2", "job_id": "fx-j4", "ai_runs": [70], "rule_score": null },
+      { "pair_id": "fx-v5", "resume_id": "fx-r3", "job_id": "fx-j1", "ai_runs": [], "rule_score": 70 },
+      { "pair_id": "fx-v6", "resume_id": "fx-r3", "job_id": "fx-j2", "ai_runs": [70], "rule_score": 150 }
+    ],
+    "expected": {
+      "primary_n": 2,
+      "primary_mae": 2.5,
+      "primary_bias": 2.5,
+      "excluded_reasons": {
+        "fx-v3": "no_valid_ai_runs",
+        "fx-v4": "invalid_rule_score",
+        "fx-v5": "no_valid_ai_runs",
+        "fx-v6": "invalid_rule_score"
+      },
+      "suspected_runs_excluded_primary": { "fx-v1": ["150_invalid"], "fx-v2": ["0_suspected_default_fill"] },
+      "include_suspected_sensitivity": { "n": 2, "mae": 15.0, "bias": -15.0 }
+    }
+  },
+  "bootstrap": {
+    "note": "Deterministic under seed 20261013 with the mulberry32 PRNG; expected output is structural (ordering, labels, warning), not fixed CI numbers, because CI values are implementation-defined percentiles.",
+    "expected": {
+      "label_contains": "indicative",
+      "few_cluster_warning": true,
+      "resume_clusters": 3,
+      "job_clusters": 4,
+      "seed": 20261013
+    }
+  }
+}

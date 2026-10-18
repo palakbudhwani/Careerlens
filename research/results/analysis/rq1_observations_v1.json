@@ -1,0 +1,776 @@
+{
+  "dataset_id": "careerlens-rq1-observations-v1",
+  "protocol_ref": "RESEARCH_PROTOCOL.md §4.7 (focused RQ1, n=31 existing baselines; first-valid-success dedupe)",
+  "n_accepted": 31,
+  "manifest": {
+    "benchmark_sha256": "761f481acfbddffd28957e3531836e50c32762687ae10ce9641ba432312efc1c",
+    "ledger_rows": 50,
+    "raw_lines": 49,
+    "generator_seed": 20261013,
+    "analysis_library": "research/scripts/analysis_core.mjs (frozen; PROTOCOL_SEED 20261013)",
+    "rule_engine": "backend/ruleBasedFallback.js buildMatchAnalysis (offline recompute)",
+    "ground_truth_note": "No independently validated ground-truth ATS scores exist; agreement with a rule-based score is NOT accuracy."
+  },
+  "audit": {
+    "failed_attempt_rows": [
+      {
+        "seq": 6,
+        "case": "J8__R2",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_UNREACHABLE"
+      },
+      {
+        "seq": 9,
+        "case": "J5__R7",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_UNREACHABLE"
+      },
+      {
+        "seq": 10,
+        "case": "J5__R7",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_BAD_REQUEST"
+      },
+      {
+        "seq": 12,
+        "case": "J5__R9",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_BAD_REQUEST"
+      },
+      {
+        "seq": 19,
+        "case": "J5__R9",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_UNREACHABLE"
+      },
+      {
+        "seq": 22,
+        "case": "J10__R5",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_BAD_REQUEST"
+      },
+      {
+        "seq": 27,
+        "case": "J1__R2",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_UNREACHABLE"
+      },
+      {
+        "seq": 30,
+        "case": "J9__R8",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_TIMEOUT"
+      },
+      {
+        "seq": 36,
+        "case": "J3__R3",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_UNREACHABLE"
+      },
+      {
+        "seq": 37,
+        "case": "J3__R3",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_UNREACHABLE"
+      },
+      {
+        "seq": 49,
+        "case": "J3__R4",
+        "outcome": "AI_CALL_FAILED",
+        "code": "AI_TIMEOUT"
+      }
+    ],
+    "defect_zero_http_rows": [
+      2,
+      3,
+      4
+    ],
+    "duplicate_valid_observations": [
+      {
+        "case_id": "J10__R9",
+        "run_idx": 0,
+        "line": 15,
+        "atsScore": 60
+      },
+      {
+        "case_id": "J8__R2",
+        "run_idx": 0,
+        "line": 16,
+        "atsScore": 78
+      },
+      {
+        "case_id": "J5__R7",
+        "run_idx": 0,
+        "line": 17,
+        "atsScore": 92
+      },
+      {
+        "case_id": "J5__R9",
+        "run_idx": 0,
+        "line": 19,
+        "atsScore": 79
+      }
+    ],
+    "invalid_outputs_ats_zero": 0,
+    "ledger_jsonl_mismatches": [],
+    "served_labels": [
+      "groq"
+    ],
+    "model_labels": [
+      "openai/gpt-oss-120b (configured default; server-resolved per startup log)"
+    ]
+  },
+  "rows": [
+    {
+      "pair_id": "J10__R3",
+      "resume_id": "R3",
+      "job_id": "J10",
+      "designed_tier": "Low",
+      "rule_score": 35,
+      "ai_score": 46,
+      "ai_runs": [
+        46
+      ],
+      "ledger_seq": 29,
+      "raw_line": 28,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4089,
+      "tokens": {
+        "prompt_tokens": 1353,
+        "completion_tokens": 1801,
+        "total_tokens": 3154
+      }
+    },
+    {
+      "pair_id": "J10__R5",
+      "resume_id": "R5",
+      "job_id": "J10",
+      "designed_tier": "Low",
+      "rule_score": 20,
+      "ai_score": 17,
+      "ai_runs": [
+        17
+      ],
+      "ledger_seq": 23,
+      "raw_line": 22,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 3458,
+      "tokens": {
+        "prompt_tokens": 1386,
+        "completion_tokens": 1422,
+        "total_tokens": 2808
+      }
+    },
+    {
+      "pair_id": "J10__R6",
+      "resume_id": "R6",
+      "job_id": "J10",
+      "designed_tier": "Low",
+      "rule_score": 20,
+      "ai_score": 16,
+      "ai_runs": [
+        16
+      ],
+      "ledger_seq": 39,
+      "raw_line": 38,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 6871,
+      "tokens": {
+        "prompt_tokens": 1339,
+        "completion_tokens": 1896,
+        "total_tokens": 3235
+      }
+    },
+    {
+      "pair_id": "J10__R9",
+      "resume_id": "R9",
+      "job_id": "J10",
+      "designed_tier": "Mid",
+      "rule_score": 50,
+      "ai_score": 66,
+      "ai_runs": [
+        66
+      ],
+      "ledger_seq": 5,
+      "raw_line": 4,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 5015,
+      "tokens": {
+        "prompt_tokens": 1338,
+        "completion_tokens": 1910,
+        "total_tokens": 3248
+      }
+    },
+    {
+      "pair_id": "J1__R1",
+      "resume_id": "R1",
+      "job_id": "J1",
+      "designed_tier": "High",
+      "rule_score": 84,
+      "ai_score": 92,
+      "ai_runs": [
+        92
+      ],
+      "ledger_seq": 21,
+      "raw_line": 20,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 6103,
+      "tokens": {
+        "prompt_tokens": 1427,
+        "completion_tokens": 1754,
+        "total_tokens": 3181
+      }
+    },
+    {
+      "pair_id": "J1__R10",
+      "resume_id": "R10",
+      "job_id": "J1",
+      "designed_tier": "High",
+      "rule_score": 75,
+      "ai_score": 65,
+      "ai_runs": [
+        65
+      ],
+      "ledger_seq": 46,
+      "raw_line": 45,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4545,
+      "tokens": {
+        "prompt_tokens": 1414,
+        "completion_tokens": 1964,
+        "total_tokens": 3378
+      }
+    },
+    {
+      "pair_id": "J1__R2",
+      "resume_id": "R2",
+      "job_id": "J1",
+      "designed_tier": "High",
+      "rule_score": 76,
+      "ai_score": 80,
+      "ai_runs": [
+        80
+      ],
+      "ledger_seq": 28,
+      "raw_line": 27,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 9401,
+      "tokens": {
+        "prompt_tokens": 1386,
+        "completion_tokens": 1550,
+        "total_tokens": 2936
+      }
+    },
+    {
+      "pair_id": "J1__R5",
+      "resume_id": "R5",
+      "job_id": "J1",
+      "designed_tier": "Mid",
+      "rule_score": 59,
+      "ai_score": 54,
+      "ai_runs": [
+        54
+      ],
+      "ledger_seq": 44,
+      "raw_line": 43,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 3956,
+      "tokens": {
+        "prompt_tokens": 1389,
+        "completion_tokens": 1649,
+        "total_tokens": 3038
+      }
+    },
+    {
+      "pair_id": "J2__R10",
+      "resume_id": "R10",
+      "job_id": "J2",
+      "designed_tier": "Mid",
+      "rule_score": 50,
+      "ai_score": 60,
+      "ai_runs": [
+        60
+      ],
+      "ledger_seq": 8,
+      "raw_line": 7,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4472,
+      "tokens": {
+        "prompt_tokens": 1412,
+        "completion_tokens": 1521,
+        "total_tokens": 2933
+      }
+    },
+    {
+      "pair_id": "J2__R12",
+      "resume_id": "R12",
+      "job_id": "J2",
+      "designed_tier": "Mid",
+      "rule_score": 57,
+      "ai_score": 63,
+      "ai_runs": [
+        63
+      ],
+      "ledger_seq": 26,
+      "raw_line": 25,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4232,
+      "tokens": {
+        "prompt_tokens": 1388,
+        "completion_tokens": 1704,
+        "total_tokens": 3092
+      }
+    },
+    {
+      "pair_id": "J2__R4",
+      "resume_id": "R4",
+      "job_id": "J2",
+      "designed_tier": "Mid",
+      "rule_score": 42,
+      "ai_score": 31,
+      "ai_runs": [
+        31
+      ],
+      "ledger_seq": 45,
+      "raw_line": 44,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 18385,
+      "tokens": {
+        "prompt_tokens": 1364,
+        "completion_tokens": 1957,
+        "total_tokens": 3321
+      }
+    },
+    {
+      "pair_id": "J2__R7",
+      "resume_id": "R7",
+      "job_id": "J2",
+      "designed_tier": "Low",
+      "rule_score": 34,
+      "ai_score": 29,
+      "ai_runs": [
+        29
+      ],
+      "ledger_seq": 35,
+      "raw_line": 34,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 7764,
+      "tokens": {
+        "prompt_tokens": 1365,
+        "completion_tokens": 1628,
+        "total_tokens": 2993
+      }
+    },
+    {
+      "pair_id": "J2__R8",
+      "resume_id": "R8",
+      "job_id": "J2",
+      "designed_tier": "Low",
+      "rule_score": 34,
+      "ai_score": 52,
+      "ai_runs": [
+        52
+      ],
+      "ledger_seq": 40,
+      "raw_line": 39,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4308,
+      "tokens": {
+        "prompt_tokens": 1346,
+        "completion_tokens": 1853,
+        "total_tokens": 3199
+      }
+    },
+    {
+      "pair_id": "J3__R3",
+      "resume_id": "R3",
+      "job_id": "J3",
+      "designed_tier": "Low",
+      "rule_score": 29,
+      "ai_score": 13,
+      "ai_runs": [
+        13
+      ],
+      "ledger_seq": 38,
+      "raw_line": 37,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 5378,
+      "tokens": {
+        "prompt_tokens": 1356,
+        "completion_tokens": 1611,
+        "total_tokens": 2967
+      }
+    },
+    {
+      "pair_id": "J3__R4",
+      "resume_id": "R4",
+      "job_id": "J3",
+      "designed_tier": "High",
+      "rule_score": 83,
+      "ai_score": 91,
+      "ai_runs": [
+        91
+      ],
+      "ledger_seq": 50,
+      "raw_line": 49,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4502,
+      "tokens": {
+        "prompt_tokens": 1366,
+        "completion_tokens": 1909,
+        "total_tokens": 3275
+      }
+    },
+    {
+      "pair_id": "J4__R1",
+      "resume_id": "R1",
+      "job_id": "J4",
+      "designed_tier": "High",
+      "rule_score": 71,
+      "ai_score": 63,
+      "ai_runs": [
+        63
+      ],
+      "ledger_seq": 48,
+      "raw_line": 47,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 5268,
+      "tokens": {
+        "prompt_tokens": 1429,
+        "completion_tokens": 1912,
+        "total_tokens": 3341
+      }
+    },
+    {
+      "pair_id": "J4__R12",
+      "resume_id": "R12",
+      "job_id": "J4",
+      "designed_tier": "Mid",
+      "rule_score": 57,
+      "ai_score": 54,
+      "ai_runs": [
+        54
+      ],
+      "ledger_seq": 42,
+      "raw_line": 41,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 6099,
+      "tokens": {
+        "prompt_tokens": 1392,
+        "completion_tokens": 1955,
+        "total_tokens": 3347
+      }
+    },
+    {
+      "pair_id": "J4__R3",
+      "resume_id": "R3",
+      "job_id": "J4",
+      "designed_tier": "Low",
+      "rule_score": 27,
+      "ai_score": 20,
+      "ai_runs": [
+        20
+      ],
+      "ledger_seq": 32,
+      "raw_line": 31,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4609,
+      "tokens": {
+        "prompt_tokens": 1358,
+        "completion_tokens": 1783,
+        "total_tokens": 3141
+      }
+    },
+    {
+      "pair_id": "J5__R12",
+      "resume_id": "R12",
+      "job_id": "J5",
+      "designed_tier": "Mid",
+      "rule_score": 45,
+      "ai_score": 40,
+      "ai_runs": [
+        40
+      ],
+      "ledger_seq": 47,
+      "raw_line": 46,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 5115,
+      "tokens": {
+        "prompt_tokens": 1392,
+        "completion_tokens": 2000,
+        "total_tokens": 3392
+      }
+    },
+    {
+      "pair_id": "J5__R7",
+      "resume_id": "R7",
+      "job_id": "J5",
+      "designed_tier": "High",
+      "rule_score": 76,
+      "ai_score": 91,
+      "ai_runs": [
+        91
+      ],
+      "ledger_seq": 11,
+      "raw_line": 10,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4849,
+      "tokens": {
+        "prompt_tokens": 1369,
+        "completion_tokens": 1750,
+        "total_tokens": 3119
+      }
+    },
+    {
+      "pair_id": "J5__R9",
+      "resume_id": "R9",
+      "job_id": "J5",
+      "designed_tier": "High",
+      "rule_score": 76,
+      "ai_score": 80,
+      "ai_runs": [
+        80
+      ],
+      "ledger_seq": 13,
+      "raw_line": 12,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4376,
+      "tokens": {
+        "prompt_tokens": 1343,
+        "completion_tokens": 1662,
+        "total_tokens": 3005
+      }
+    },
+    {
+      "pair_id": "J6__R1",
+      "resume_id": "R1",
+      "job_id": "J6",
+      "designed_tier": "High",
+      "rule_score": 72,
+      "ai_score": 73,
+      "ai_runs": [
+        73
+      ],
+      "ledger_seq": 41,
+      "raw_line": 40,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 5074,
+      "tokens": {
+        "prompt_tokens": 1425,
+        "completion_tokens": 1873,
+        "total_tokens": 3298
+      }
+    },
+    {
+      "pair_id": "J6__R11",
+      "resume_id": "R11",
+      "job_id": "J6",
+      "designed_tier": "Mid",
+      "rule_score": 50,
+      "ai_score": 62,
+      "ai_runs": [
+        62
+      ],
+      "ledger_seq": 14,
+      "raw_line": 13,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 6300,
+      "tokens": {
+        "prompt_tokens": 1401,
+        "completion_tokens": 1853,
+        "total_tokens": 3254
+      }
+    },
+    {
+      "pair_id": "J6__R8",
+      "resume_id": "R8",
+      "job_id": "J6",
+      "designed_tier": "High",
+      "rule_score": 73,
+      "ai_score": 81,
+      "ai_runs": [
+        81
+      ],
+      "ledger_seq": 43,
+      "raw_line": 42,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4867,
+      "tokens": {
+        "prompt_tokens": 1346,
+        "completion_tokens": 2000,
+        "total_tokens": 3346
+      }
+    },
+    {
+      "pair_id": "J7__R12",
+      "resume_id": "R12",
+      "job_id": "J7",
+      "designed_tier": "High",
+      "rule_score": 83,
+      "ai_score": 86,
+      "ai_runs": [
+        86
+      ],
+      "ledger_seq": 25,
+      "raw_line": 24,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4559,
+      "tokens": {
+        "prompt_tokens": 1387,
+        "completion_tokens": 1474,
+        "total_tokens": 2861
+      }
+    },
+    {
+      "pair_id": "J8__R11",
+      "resume_id": "R11",
+      "job_id": "J8",
+      "designed_tier": "Mid",
+      "rule_score": 59,
+      "ai_score": 83,
+      "ai_runs": [
+        83
+      ],
+      "ledger_seq": 15,
+      "raw_line": 14,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 5070,
+      "tokens": {
+        "prompt_tokens": 1395,
+        "completion_tokens": 1899,
+        "total_tokens": 3294
+      }
+    },
+    {
+      "pair_id": "J8__R2",
+      "resume_id": "R2",
+      "job_id": "J8",
+      "designed_tier": "High",
+      "rule_score": 64,
+      "ai_score": 68,
+      "ai_runs": [
+        68
+      ],
+      "ledger_seq": 7,
+      "raw_line": 6,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 5702,
+      "tokens": {
+        "prompt_tokens": 1378,
+        "completion_tokens": 2000,
+        "total_tokens": 3378
+      }
+    },
+    {
+      "pair_id": "J8__R3",
+      "resume_id": "R3",
+      "job_id": "J8",
+      "designed_tier": "Mid",
+      "rule_score": 42,
+      "ai_score": 65,
+      "ai_runs": [
+        65
+      ],
+      "ledger_seq": 24,
+      "raw_line": 23,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 3183,
+      "tokens": {
+        "prompt_tokens": 1348,
+        "completion_tokens": 1348,
+        "total_tokens": 2696
+      }
+    },
+    {
+      "pair_id": "J8__R8",
+      "resume_id": "R8",
+      "job_id": "J8",
+      "designed_tier": "Low",
+      "rule_score": 27,
+      "ai_score": 34,
+      "ai_runs": [
+        34
+      ],
+      "ledger_seq": 33,
+      "raw_line": 32,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 5536,
+      "tokens": {
+        "prompt_tokens": 1340,
+        "completion_tokens": 1295,
+        "total_tokens": 2635
+      }
+    },
+    {
+      "pair_id": "J9__R5",
+      "resume_id": "R5",
+      "job_id": "J9",
+      "designed_tier": "High",
+      "rule_score": 67,
+      "ai_score": 90,
+      "ai_runs": [
+        90
+      ],
+      "ledger_seq": 34,
+      "raw_line": 33,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4569,
+      "tokens": {
+        "prompt_tokens": 1396,
+        "completion_tokens": 1776,
+        "total_tokens": 3172
+      }
+    },
+    {
+      "pair_id": "J9__R8",
+      "resume_id": "R8",
+      "job_id": "J9",
+      "designed_tier": "Low",
+      "rule_score": 29,
+      "ai_score": 30,
+      "ai_runs": [
+        30
+      ],
+      "ledger_seq": 31,
+      "raw_line": 30,
+      "served_provider": "groq",
+      "model": "openai/gpt-oss-120b (configured default; server-resolved per startup log)",
+      "latency_ms": 4709,
+      "tokens": {
+        "prompt_tokens": 1355,
+        "completion_tokens": 1342,
+        "total_tokens": 2697
+      }
+    }
+  ]
+}

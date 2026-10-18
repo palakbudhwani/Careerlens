@@ -1,0 +1,11 @@
+VALIDATION REPORT
+
+Command: python validate_dataset.py
+Exit code: 0
+
+Actual stdout:
+VALIDATION PASSED
+Rows checked: 60
+Unique case IDs: 60
+Columns checked: 17
+Skill overlap, missing-skill lists, scores, bands, and synthetic-origin flags are consistent.

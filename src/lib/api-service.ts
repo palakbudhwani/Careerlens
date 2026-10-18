@@ -51,8 +51,8 @@ export function describeConnectionFailure(): string {
 
 /**
  * Upper bound for one API request. The backend's AI chain spends at most
- * PRIMARY_TIMEOUT_MS (20s) on the primary provider, then the fallback attempt
- * (60s), so a full chain is bounded at ~81s including the short fallback
+ * PRIMARY_TIMEOUT_MS (45s) on the primary provider, then the fallback attempt
+ * (60s), so a full chain is bounded at ~106.5s including the short fallback
  * backoff; this sits well above it: a slow-but-valid answer is never cut off,
  * while a stalled connection can no longer hang the UI forever.
  */
